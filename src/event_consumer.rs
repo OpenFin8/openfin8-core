@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
 // SPDX-License-Identifier: Apache-2.0
 
-//! Sentin8:Bus consumers (fdx DESIGN.md §2) - two stream families:
+//! Sentin8:Bus consumers (bank8-open-ca DESIGN.md §2) - two stream families:
 //!
 //! * `sys` - `sentin8:sys:service:updated` events: when the `fdx` service
 //!   is enabled for an org/env, the consumer auto-registers an FDX
@@ -159,7 +159,7 @@ async fn sse_loop(
             };
 
             // Family dispatch: sys → env-init, auth → grant seed
-            // (fdx DESIGN.md §2 - two families, one loop shape).
+            // (bank8-open-ca DESIGN.md §2 - two families, one loop shape).
             match family {
                 "sys" => handle_envinit_message(pool, &msg, &profile).await,
                 "auth" => handle_grant_message(pool, &msg, profile).await,

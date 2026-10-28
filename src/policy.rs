@@ -17,7 +17,7 @@
 //! object required in addition to the handler consent check) is authored
 //! as a tenant policy set over the ReBAC substrate - never as a handler
 //! scope check. Raw access tokens/private keys stay secret-referenced
-//! (fdx design §SEC); policy stores no credentials.
+//! (bank8-open-ca design §SEC); policy stores no credentials.
 
 #[allow(unused_imports)]
 pub use sentin8::shield::runtime::{

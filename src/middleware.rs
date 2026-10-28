@@ -118,7 +118,7 @@ fn scope_for_cluster(profile: &crate::profile::Profile, cluster: csdf::DataClust
 /// the SAME grant row: the customer's grant governs what data may leave,
 /// regardless of which client presents a token for it.
 pub async fn consent_filter(state: &AppState, _a: &auth::AuthContext) -> CsdfFilter {
-    // Same-transaction discipline (fdx DESIGN.md §5): context + lookup on
+    // Same-transaction discipline (bank8-open-ca DESIGN.md §5): context + lookup on
     // one tx - a bare autocommit connection loses the transaction-local
     // context and RLS answers with zero consent rows (→ 403 for every
     // provider data call).

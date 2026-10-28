@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
 // SPDX-License-Identifier: Apache-2.0
 
-//! Delegated provider-token storage via secret references (fdx DESIGN.md §1,
+//! Delegated provider-token storage via secret references (bank8-open-ca DESIGN.md §1,
 //! two-ledger model). The recipient-side consent callback exchanges the
 //! authorization code at the provider's AS and stores the resulting access
 //! and refresh tokens on its OWN registry row (`fdx.recipient_consents`) -
@@ -193,7 +193,7 @@ pub async fn load_provider_refresh_token(
 }
 
 /// Store the recipient client's DPoP signing key sealed behind a secret
-/// reference and return the reference URI (fdx DESIGN.md §1 - key material
+/// reference and return the reference URI (bank8-open-ca DESIGN.md §1 - key material
 /// is never a plaintext column). One key per `open_ca.recipients` row (the
 /// recipient's per-provider client). Overwrites in place (key rotation).
 pub fn store_dpop_key(recipient_row_id: Uuid, pem: &str) -> Result<String, String> {

@@ -112,7 +112,7 @@ pub async fn create_notification_subscription(
             FdxErrorResponse::bad_request("callbackUrl must be an https URL").into_response(),
         );
     }
-    // Same-transaction discipline (fdx DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     // Generate a per-subscription signing secret and store it by reference.
@@ -188,7 +188,7 @@ pub async fn list_notification_subscriptions(
     headers: HeaderMap,
 ) -> Result<Json<JsonValue>, Response> {
     let a = middleware::provider_authz(&state, &headers, None).await?;
-    // Same-transaction discipline (fdx DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let rows = sqlx::query(
@@ -237,7 +237,7 @@ pub async fn get_notification_subscription(
     Path(sub_id): Path<Uuid>,
 ) -> Result<Json<NotificationSubscription>, Response> {
     let a = middleware::provider_authz(&state, &headers, None).await?;
-    // Same-transaction discipline (fdx DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let row = sqlx::query(
@@ -280,7 +280,7 @@ pub async fn delete_notification_subscription(
     Path(sub_id): Path<Uuid>,
 ) -> Result<StatusCode, Response> {
     let a = middleware::provider_authz(&state, &headers, None).await?;
-    // Same-transaction discipline (fdx DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let updated = sqlx::query(
@@ -349,7 +349,7 @@ pub async fn publish_notification(
     Json(req): Json<PublishNotificationRequest>,
 ) -> Result<Json<NotificationAcceptedResponse>, Response> {
     let a = middleware::provider_authz(&state, &headers, None).await?;
-    // Same-transaction discipline (fdx DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let row = sqlx::query(
@@ -406,7 +406,7 @@ pub async fn list_notifications_feed(
     Query(q): Query<FeedQuery>,
 ) -> Result<Json<NotificationListResponse>, Response> {
     let a = middleware::provider_authz(&state, &headers, None).await?;
-    // Same-transaction discipline (fdx DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let rows = sqlx::query(
@@ -451,7 +451,7 @@ pub(crate) async fn queue_consent_revoked_notification(
     env_id: Uuid,
     consent_id: Uuid,
 ) {
-    // Same-transaction discipline (fdx DESIGN.md §5) - subscription lookup
+    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - subscription lookup
     // + notification queueing share one tx with the context set.
     let Ok(mut conn) = state.pool.begin().await else {
         tracing::warn!("fdx: revocation notification queue failed");

@@ -314,7 +314,7 @@ pub fn routes(
         )
         // : revocation by the delegated subject (the recipient plane calls
         // this with the delegated provider token after revoking its
-        // registry row - fdx DESIGN.md §4; POST alias of the PUT
+        // registry row - bank8-open-ca DESIGN.md §4; POST alias of the PUT
         // revocation surface above for the RFW renderer + external
         // recipient clients).
         .route(
