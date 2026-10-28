@@ -678,16 +678,20 @@ dependencies = [
 
 [[package]]
 name = "bank8-open-core"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "async-trait",
  "axum",
  "bank8",
  "chrono",
+ "dotenvy",
+ "futures-util",
+ "hyper",
  "jsonwebtoken",
  "reqwest 0.12.28",
  "sentin8",
+ "sentin8-secrets-sdk",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -697,6 +701,7 @@ dependencies = [
  "tower",
  "tower-http 0.7.1",
  "tracing",
+ "tracing-subscriber",
  "utoipa",
  "uuid",
 ]
@@ -4382,6 +4387,30 @@ dependencies = [
  "serde",
  "serde_json",
  "utoipa",
+]
+
+[[package]]
+name = "sentin8-secrets"
+version = "0.1.0"
+source = "git+https://github.com/Sentin8/sentin8-secrets?tag=secrets-sdk-v0.4.0#8ab0ea073ad6fc39eb37957243aa0a009fa353b7"
+dependencies = [
+ "async-trait",
+ "reqwest 0.12.28",
+ "sentin8-m2m",
+ "sentin8-middleware",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "sentin8-secrets-sdk"
+version = "0.1.0"
+source = "git+https://github.com/Sentin8/sentin8-secrets?tag=secrets-sdk-v0.4.0#8ab0ea073ad6fc39eb37957243aa0a009fa353b7"
+dependencies = [
+ "sentin8-secrets",
 ]
 
 [[package]]
