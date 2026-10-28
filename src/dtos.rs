@@ -28,7 +28,7 @@ pub struct AccountsPassthrough(
 
 /// Consent introspection document.
 #[derive(Debug, Serialize, ToSchema)]
-pub struct FdxConsentIntrospection {
+pub struct ConsentIntrospection {
     /// The consent id.
     #[serde(rename = "consentId")]
     pub consent_id: Uuid,
@@ -49,12 +49,12 @@ pub struct FdxConsentIntrospection {
     #[serde(rename = "createdAt")]
     pub created_at: DateTime<Utc>,
     /// Resource-level grants.
-    pub resources: Vec<FdxConsentResource>,
+    pub resources: Vec<ConsentResource>,
 }
 
 /// One consented resource.
 #[derive(Debug, Serialize, ToSchema)]
-pub struct FdxConsentResource {
+pub struct ConsentResource {
     /// Resource type (e.g. `account`).
     #[serde(rename = "resourceType")]
     pub resource_type: String,
@@ -95,7 +95,7 @@ pub struct ProviderCatalogResponse {
 
 /// FDX capability announcement.
 #[derive(Debug, Serialize, ToSchema)]
-pub struct FdxCapability {
+pub struct CapabilityAnnouncement {
     /// The FDX spec version served.
     #[serde(rename = "fdxVersion")]
     pub fdx_version: String,
@@ -108,7 +108,7 @@ pub struct FdxCapability {
 
 /// Availability endpoint document.
 #[derive(Debug, Serialize, ToSchema)]
-pub struct FdxAvailability {
+pub struct AvailabilityStatus {
     /// Availability status (always `available` when serving).
     pub status: String,
     /// Human description of the outage window (if any).

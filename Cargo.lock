@@ -678,7 +678,7 @@ dependencies = [
 
 [[package]]
 name = "bank8-open-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "async-trait",

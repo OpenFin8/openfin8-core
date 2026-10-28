@@ -478,7 +478,7 @@ pub async fn get_account_transactions(
     get,
     path = "/fdx/v6/consents/{id}",
     responses(
-        (status = 200, description = "OK", body = FdxConsentIntrospection),
+        (status = 200, description = "OK", body = ConsentIntrospection),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -489,7 +489,7 @@ pub async fn get_fdx_consent(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(consent_id): Path<Uuid>,
-) -> Result<Json<FdxConsentIntrospection>, Response> {
+) -> Result<Json<ConsentIntrospection>, Response> {
     let _a = middleware::provider_authz(&state, &headers, None).await?;
     // Same-transaction discipline (fdx DESIGN.md §5) - see start_consent.
     let mut conn = state
@@ -516,15 +516,15 @@ pub async fn get_fdx_consent(
             .fetch_all(&mut *conn)
             .await
             .map_err(|e| FdxErrorResponse::internal(format!("db: {e}")))?;
-            let resource_list: Vec<FdxConsentResource> = resources
+            let resource_list: Vec<ConsentResource> = resources
                 .iter()
-                .map(|res| FdxConsentResource {
+                .map(|res| ConsentResource {
                     resource_type: res.get::<String, _>("resource_type"),
                     resource_id: res.get::<String, _>("resource_id"),
                     data_clusters: res.get::<Vec<String>, _>("data_clusters"),
                 })
                 .collect();
-            Ok(Json(FdxConsentIntrospection {
+            Ok(Json(ConsentIntrospection {
                 consent_id: r.get::<Uuid, _>("id"),
                 customer_id: r.get::<Uuid, _>("customer_id"),
                 status: r.get::<String, _>("status"),
@@ -927,15 +927,15 @@ pub async fn create_payment(
     get,
     path = "/fdx/v6/capability",
     responses(
-        (status = 200, description = "OK", body = FdxCapability),
+        (status = 200, description = "OK", body = CapabilityAnnouncement),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
     security(),
     tag = "open-banking",
 )]
-pub async fn get_capability(State(state): State<AppState>) -> Json<FdxCapability> {
-    Json(FdxCapability {
+pub async fn get_capability(State(state): State<AppState>) -> Json<CapabilityAnnouncement> {
+    Json(CapabilityAnnouncement {
         fdx_version: state.config.fdx_version.clone(),
         capabilities: vec![
             "ACCOUNTS",
@@ -970,15 +970,15 @@ pub async fn get_capability(State(state): State<AppState>) -> Json<FdxCapability
     get,
     path = "/fdx/v6/availability",
     responses(
-        (status = 200, description = "OK", body = FdxAvailability),
+        (status = 200, description = "OK", body = AvailabilityStatus),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
     security(),
     tag = "open-banking",
 )]
-pub async fn get_availability() -> Json<FdxAvailability> {
-    Json(FdxAvailability {
+pub async fn get_availability() -> Json<AvailabilityStatus> {
+    Json(AvailabilityStatus {
         status: "available".into(),
         description: "FDX provider is operational".into(),
     })
