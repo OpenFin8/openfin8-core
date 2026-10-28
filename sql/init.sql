@@ -4,14 +4,14 @@
 -- SPDX-License-Identifier: Apache-2.0
 
 -- Bank8:OpenCA - the service's own schema `open_ca` (schema-per-service):
--- open_ca_* domain tables + open_ca.outbox / open_ca.audit_journal producer tables,
+-- openfin8_ca_* domain tables + openfin8_ca.outbox / openfin8_ca.audit_journal producer tables,
 -- all FORCE-RLS env-scoped (provider_profiles is the public cross-env
 -- catalog - no RLS by design).
 --
--- TWO LEDGERS (bank8-open-ca DESIGN.md §1): the provider's GRANT ledger
--- (`open_ca.consents` - seeded from sentin8:auth:grant:created) lives in the
--- provider tenant; the recipient's REGISTRY (`open_ca.recipient_consents` +
--- `open_ca.recipients`) lives in the recipient tenant. The OAuth client
+-- TWO LEDGERS (openfin8-ca DESIGN.md §1): the provider's GRANT ledger
+-- (`openfin8_ca.consents` - seeded from sentin8:auth:grant:created) lives in the
+-- provider tenant; the recipient's REGISTRY (`openfin8_ca.recipient_consents` +
+-- `openfin8_ca.recipients`) lives in the recipient tenant. The OAuth client
 -- belongs to the recipient; the delegated tokens belong to the recipient
 -- (it exchanges the code). No column on one side's tables references the
 -- other side's tenant identity beyond opaque OAuth handles.
@@ -22,8 +22,8 @@
 -- parsed from the OAuth `state`; the customer_id IS the token `sub` -
 -- both are the provider's user id at code issuance). No token or PKCE
 -- material here - those are the RECIPIENT's (client) custody.
-CREATE SCHEMA IF NOT EXISTS open_ca;
-CREATE TABLE IF NOT EXISTS open_ca.consents (
+CREATE SCHEMA IF NOT EXISTS openfin8_ca;
+CREATE TABLE IF NOT EXISTS openfin8_ca.consents (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env_id  UUID NOT NULL,
     customer_id     UUID NOT NULL,
@@ -47,8 +47,8 @@ CREATE TABLE IF NOT EXISTS open_ca.consents (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_open_ca_consents_env ON open_ca.consents (env_id);
-CREATE INDEX IF NOT EXISTS idx_open_ca_consents_customer ON open_ca.consents (customer_id);
+CREATE INDEX IF NOT EXISTS idx_open_ca_consents_env ON openfin8_ca.consents (env_id);
+CREATE INDEX IF NOT EXISTS idx_open_ca_consents_customer ON openfin8_ca.consents (customer_id);
 
 -- Bank8:OpenCA consent resources - per-account grants within a consent.
 -- Per FDX Consent API Specification v1.0 §4.2, a ConsentGrant enumerates
@@ -56,9 +56,9 @@ CREATE INDEX IF NOT EXISTS idx_open_ca_consents_customer ON open_ca.consents (cu
 -- table stores the per-account grants so the recipient API can filter
 -- accounts to only those the customer selected during the consent flow.
 -- See FDX UX Guidelines v3.1 §3.1.6 "Select Accounts".
-CREATE TABLE IF NOT EXISTS open_ca.consent_resources (
+CREATE TABLE IF NOT EXISTS openfin8_ca.consent_resources (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    consent_id      UUID NOT NULL REFERENCES open_ca.consents(id) ON DELETE CASCADE,
+    consent_id      UUID NOT NULL REFERENCES openfin8_ca.consents(id) ON DELETE CASCADE,
     resource_type   TEXT NOT NULL DEFAULT 'ACCOUNT',
     resource_id     TEXT NOT NULL,
     data_clusters   TEXT[] NOT NULL DEFAULT '{}',
@@ -66,16 +66,16 @@ CREATE TABLE IF NOT EXISTS open_ca.consent_resources (
 );
 
 CREATE INDEX IF NOT EXISTS idx_open_ca_consent_resources_consent
-    ON open_ca.consent_resources (consent_id);
+    ON openfin8_ca.consent_resources (consent_id);
 CREATE INDEX IF NOT EXISTS idx_open_ca_consent_resources_resource
-    ON open_ca.consent_resources (resource_type, resource_id);
+    ON openfin8_ca.consent_resources (resource_type, resource_id);
 
 -- Bank8:OpenCA provider profiles - the recipient-side directory of providers
 -- (the cross-env catalog). Registered by env-init; the recipient app
 -- lists providers from it. Carries NO recipient/OAuth-client material -
 -- the recipient's client is registered at the provider's AS by the
--- recipient's own consent-start flow (open_ca.recipients caches it).
-CREATE TABLE IF NOT EXISTS open_ca.provider_profiles (
+-- recipient's own consent-start flow (openfin8_ca.recipients caches it).
+CREATE TABLE IF NOT EXISTS openfin8_ca.provider_profiles (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env_id  UUID NOT NULL,
     provider_name   TEXT NOT NULL,
@@ -89,16 +89,16 @@ CREATE TABLE IF NOT EXISTS open_ca.provider_profiles (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_open_ca_provider_profiles_env_name
-    ON open_ca.provider_profiles (env_id, provider_name);
+    ON openfin8_ca.provider_profiles (env_id, provider_name);
 
 -- Bank8:OpenCA recipient client registrations - the RECIPIENT's per-provider
--- OAuth client cache (two-ledger model, bank8-open-ca DESIGN.md §1). One row per
+-- OAuth client cache (two-ledger model, openfin8-ca DESIGN.md §1). One row per
 -- (recipient env, provider): the public client the recipient registered
 -- at the provider's authorization server via DCR (RFC 7591), the redirect
 -- URI registered for it, and the sealed DPoP key the recipient uses for
 -- RFC 9449 proofs at that provider's token endpoint. Key material lives
 -- in the secrets backend; only the sentin8-secrets:// reference is stored.
-CREATE TABLE IF NOT EXISTS open_ca.recipients (
+CREATE TABLE IF NOT EXISTS openfin8_ca.recipients (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env_id  UUID NOT NULL,
     provider_id     TEXT NOT NULL,
@@ -112,16 +112,16 @@ CREATE TABLE IF NOT EXISTS open_ca.recipients (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_open_ca_recipients_env_provider
-    ON open_ca.recipients (env_id, provider_id);
+    ON openfin8_ca.recipients (env_id, provider_id);
 
 -- The RECIPIENT consent registry - the fintech's own bookkeeping of its
--- customers' bank connections (two-ledger model, bank8-open-ca DESIGN.md §1).
+-- customers' bank connections (two-ledger model, openfin8-ca DESIGN.md §1).
 -- Written by the recipient-side consent-start (pending) and OAuth callback
 -- (active) surfaces; read by the fintech app's Connections/Accounts pages.
 -- The PKCE verifier and delegated provider tokens live HERE - the recipient
 -- is the OAuth client, so token custody follows the verifier. Tokens are
 -- stored as sentin8-secrets:// references - never plaintext.
-CREATE TABLE IF NOT EXISTS open_ca.recipient_consents (
+CREATE TABLE IF NOT EXISTS openfin8_ca.recipient_consents (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env_id  UUID NOT NULL,
     customer_id     UUID NOT NULL,
@@ -141,11 +141,11 @@ CREATE TABLE IF NOT EXISTS open_ca.recipient_consents (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_open_ca_recipient_consents_env ON open_ca.recipient_consents (env_id);
-CREATE INDEX IF NOT EXISTS idx_open_ca_recipient_consents_customer ON open_ca.recipient_consents (customer_id);
+CREATE INDEX IF NOT EXISTS idx_open_ca_recipient_consents_env ON openfin8_ca.recipient_consents (env_id);
+CREATE INDEX IF NOT EXISTS idx_open_ca_recipient_consents_customer ON openfin8_ca.recipient_consents (customer_id);
 
 -- Bank8:OpenCA audit events
-CREATE TABLE IF NOT EXISTS open_ca.audit_events (
+CREATE TABLE IF NOT EXISTS openfin8_ca.audit_events (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env_id      UUID,
     actor_user_id       TEXT,
@@ -163,78 +163,78 @@ CREATE TABLE IF NOT EXISTS open_ca.audit_events (
 -- scopes to the right tenant. env_id is the sole tenant key
 -- (architecture-principles.md §4.3).
 
-ALTER TABLE open_ca.consents ENABLE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.consents FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS consents_select ON open_ca.consents;
-CREATE POLICY consents_select ON open_ca.consents FOR SELECT
+ALTER TABLE openfin8_ca.consents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.consents FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS consents_select ON openfin8_ca.consents;
+CREATE POLICY consents_select ON openfin8_ca.consents FOR SELECT
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS consents_insert ON open_ca.consents;
-CREATE POLICY consents_insert ON open_ca.consents FOR INSERT
+DROP POLICY IF EXISTS consents_insert ON openfin8_ca.consents;
+CREATE POLICY consents_insert ON openfin8_ca.consents FOR INSERT
     WITH CHECK (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS consents_update ON open_ca.consents;
-CREATE POLICY consents_update ON open_ca.consents FOR UPDATE
+DROP POLICY IF EXISTS consents_update ON openfin8_ca.consents;
+CREATE POLICY consents_update ON openfin8_ca.consents FOR UPDATE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS consents_delete ON open_ca.consents;
-CREATE POLICY consents_delete ON open_ca.consents FOR DELETE
+DROP POLICY IF EXISTS consents_delete ON openfin8_ca.consents;
+CREATE POLICY consents_delete ON openfin8_ca.consents FOR DELETE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
 
--- open_ca.consent_resources: no env_id - protected transitively via
--- open_ca.consents (CASCADE FK). RLS is not needed (the parent table filters).
+-- openfin8_ca.consent_resources: no env_id - protected transitively via
+-- openfin8_ca.consents (CASCADE FK). RLS is not needed (the parent table filters).
 -- No RLS on this table.
 
--- open_ca.provider_profiles: explicitly NO RLS - it is a PUBLIC cross-env
+-- openfin8_ca.provider_profiles: explicitly NO RLS - it is a PUBLIC cross-env
 -- registry (the recipient catalog: any environment's caller discovers any
--- active provider; bank8-open-ca design §4.3c). The tenant-visibility FORCE-RLS pattern
+-- active provider; openfin8-ca design §4.3c). The tenant-visibility FORCE-RLS pattern
 -- must NOT apply here - with it, the cross-env catalog read saw nothing and
 -- the provider observation poll returned an empty list. The idempotent
 -- statements below REMOVE any policy a prior blanket pass may have applied
 -- (convergent on re-enroll).
-ALTER TABLE open_ca.provider_profiles NO FORCE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.provider_profiles DISABLE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS provider_profiles_select ON open_ca.provider_profiles;
-DROP POLICY IF EXISTS provider_profiles_insert ON open_ca.provider_profiles;
-DROP POLICY IF EXISTS provider_profiles_update ON open_ca.provider_profiles;
-DROP POLICY IF EXISTS provider_profiles_delete ON open_ca.provider_profiles;
-ALTER TABLE open_ca.recipients ENABLE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.recipients FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS recipients_select ON open_ca.recipients;
-CREATE POLICY recipients_select ON open_ca.recipients FOR SELECT
+ALTER TABLE openfin8_ca.provider_profiles NO FORCE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.provider_profiles DISABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS provider_profiles_select ON openfin8_ca.provider_profiles;
+DROP POLICY IF EXISTS provider_profiles_insert ON openfin8_ca.provider_profiles;
+DROP POLICY IF EXISTS provider_profiles_update ON openfin8_ca.provider_profiles;
+DROP POLICY IF EXISTS provider_profiles_delete ON openfin8_ca.provider_profiles;
+ALTER TABLE openfin8_ca.recipients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.recipients FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS recipients_select ON openfin8_ca.recipients;
+CREATE POLICY recipients_select ON openfin8_ca.recipients FOR SELECT
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS recipients_insert ON open_ca.recipients;
-CREATE POLICY recipients_insert ON open_ca.recipients FOR INSERT
+DROP POLICY IF EXISTS recipients_insert ON openfin8_ca.recipients;
+CREATE POLICY recipients_insert ON openfin8_ca.recipients FOR INSERT
     WITH CHECK (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS recipients_update ON open_ca.recipients;
-CREATE POLICY recipients_update ON open_ca.recipients FOR UPDATE
+DROP POLICY IF EXISTS recipients_update ON openfin8_ca.recipients;
+CREATE POLICY recipients_update ON openfin8_ca.recipients FOR UPDATE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS recipients_delete ON open_ca.recipients;
-CREATE POLICY recipients_delete ON open_ca.recipients FOR DELETE
+DROP POLICY IF EXISTS recipients_delete ON openfin8_ca.recipients;
+CREATE POLICY recipients_delete ON openfin8_ca.recipients FOR DELETE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
 
--- open_ca.recipient_consents: the RECIPIENT registry (two-ledger model) -
+-- openfin8_ca.recipient_consents: the RECIPIENT registry (two-ledger model) -
 -- same env-scoped FORCE-RLS pattern as the grant ledger; the recipient
 -- reads/writes ONLY its own tenant's connection rows.
-ALTER TABLE open_ca.recipient_consents ENABLE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.recipient_consents FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS recipient_consents_select ON open_ca.recipient_consents;
-CREATE POLICY recipient_consents_select ON open_ca.recipient_consents FOR SELECT
+ALTER TABLE openfin8_ca.recipient_consents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.recipient_consents FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS recipient_consents_select ON openfin8_ca.recipient_consents;
+CREATE POLICY recipient_consents_select ON openfin8_ca.recipient_consents FOR SELECT
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS recipient_consents_insert ON open_ca.recipient_consents;
-CREATE POLICY recipient_consents_insert ON open_ca.recipient_consents FOR INSERT
+DROP POLICY IF EXISTS recipient_consents_insert ON openfin8_ca.recipient_consents;
+CREATE POLICY recipient_consents_insert ON openfin8_ca.recipient_consents FOR INSERT
     WITH CHECK (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS recipient_consents_update ON open_ca.recipient_consents;
-CREATE POLICY recipient_consents_update ON open_ca.recipient_consents FOR UPDATE
+DROP POLICY IF EXISTS recipient_consents_update ON openfin8_ca.recipient_consents;
+CREATE POLICY recipient_consents_update ON openfin8_ca.recipient_consents FOR UPDATE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS recipient_consents_delete ON open_ca.recipient_consents;
-CREATE POLICY recipient_consents_delete ON open_ca.recipient_consents FOR DELETE
+DROP POLICY IF EXISTS recipient_consents_delete ON openfin8_ca.recipient_consents;
+CREATE POLICY recipient_consents_delete ON openfin8_ca.recipient_consents FOR DELETE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
 
-ALTER TABLE open_ca.audit_events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.audit_events FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS audit_events_select ON open_ca.audit_events;
-CREATE POLICY audit_events_select ON open_ca.audit_events FOR SELECT
+ALTER TABLE openfin8_ca.audit_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.audit_events FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS audit_events_select ON openfin8_ca.audit_events;
+CREATE POLICY audit_events_select ON openfin8_ca.audit_events FOR SELECT
     USING (sentin8_context_initialized() AND (env_id IS NULL OR env_id = sentin8_current_env_id()));
-DROP POLICY IF EXISTS audit_events_insert ON open_ca.audit_events;
-CREATE POLICY audit_events_insert ON open_ca.audit_events FOR INSERT
+DROP POLICY IF EXISTS audit_events_insert ON openfin8_ca.audit_events;
+CREATE POLICY audit_events_insert ON openfin8_ca.audit_events FOR INSERT
     WITH CHECK (sentin8_context_initialized() AND (env_id IS NULL OR env_id = sentin8_current_env_id()));
 
 -- Holder-scoped RLS policies
@@ -254,7 +254,7 @@ CREATE POLICY audit_events_insert ON open_ca.audit_events FOR INSERT
 -- callback URL with `x-sentin8-signature: sha256=...` (HMAC-SHA256 of the
 -- body with the subscription secret) - the same signing scheme as Auth's
 -- webhook relay (auth webhooks.rs relay_tick).
-CREATE TABLE IF NOT EXISTS open_ca.notification_subscriptions (
+CREATE TABLE IF NOT EXISTS openfin8_ca.notification_subscriptions (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env_id  UUID NOT NULL,
     customer_id     UUID,
@@ -281,28 +281,28 @@ CREATE TABLE IF NOT EXISTS open_ca.notification_subscriptions (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_open_ca_notification_subscriptions_env
-    ON open_ca.notification_subscriptions (env_id);
+    ON openfin8_ca.notification_subscriptions (env_id);
 
-ALTER TABLE open_ca.notification_subscriptions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.notification_subscriptions FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS notification_subscriptions_select ON open_ca.notification_subscriptions;
-CREATE POLICY notification_subscriptions_select ON open_ca.notification_subscriptions FOR SELECT
+ALTER TABLE openfin8_ca.notification_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.notification_subscriptions FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS notification_subscriptions_select ON openfin8_ca.notification_subscriptions;
+CREATE POLICY notification_subscriptions_select ON openfin8_ca.notification_subscriptions FOR SELECT
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS notification_subscriptions_insert ON open_ca.notification_subscriptions;
-CREATE POLICY notification_subscriptions_insert ON open_ca.notification_subscriptions FOR INSERT
+DROP POLICY IF EXISTS notification_subscriptions_insert ON openfin8_ca.notification_subscriptions;
+CREATE POLICY notification_subscriptions_insert ON openfin8_ca.notification_subscriptions FOR INSERT
     WITH CHECK (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS notification_subscriptions_update ON open_ca.notification_subscriptions;
-CREATE POLICY notification_subscriptions_update ON open_ca.notification_subscriptions FOR UPDATE
+DROP POLICY IF EXISTS notification_subscriptions_update ON openfin8_ca.notification_subscriptions;
+CREATE POLICY notification_subscriptions_update ON openfin8_ca.notification_subscriptions FOR UPDATE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS notification_subscriptions_delete ON open_ca.notification_subscriptions;
-CREATE POLICY notification_subscriptions_delete ON open_ca.notification_subscriptions FOR DELETE
+DROP POLICY IF EXISTS notification_subscriptions_delete ON openfin8_ca.notification_subscriptions;
+CREATE POLICY notification_subscriptions_delete ON openfin8_ca.notification_subscriptions FOR DELETE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
 
 -- FC-6: Notification feed (published/ingested notifications, pollable).
-CREATE TABLE IF NOT EXISTS open_ca.notifications (
+CREATE TABLE IF NOT EXISTS openfin8_ca.notifications (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env_id  UUID NOT NULL,
-    subscription_id UUID REFERENCES open_ca.notification_subscriptions(id) ON DELETE SET NULL,
+    subscription_id UUID REFERENCES openfin8_ca.notification_subscriptions(id) ON DELETE SET NULL,
     notification_type TEXT NOT NULL,
     category        TEXT,
     severity        TEXT,
@@ -314,22 +314,22 @@ CREATE TABLE IF NOT EXISTS open_ca.notifications (
     delivered_at    TIMESTAMPTZ,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX IF NOT EXISTS idx_open_ca_notifications_env ON open_ca.notifications (env_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_open_ca_notifications_env ON openfin8_ca.notifications (env_id, created_at);
 
-ALTER TABLE open_ca.notifications ENABLE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.notifications FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS notifications_select ON open_ca.notifications;
-CREATE POLICY notifications_select ON open_ca.notifications FOR SELECT
+ALTER TABLE openfin8_ca.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.notifications FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS notifications_select ON openfin8_ca.notifications;
+CREATE POLICY notifications_select ON openfin8_ca.notifications FOR SELECT
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS notifications_insert ON open_ca.notifications;
-CREATE POLICY notifications_insert ON open_ca.notifications FOR INSERT
+DROP POLICY IF EXISTS notifications_insert ON openfin8_ca.notifications;
+CREATE POLICY notifications_insert ON openfin8_ca.notifications FOR INSERT
     WITH CHECK (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS notifications_update ON open_ca.notifications;
-CREATE POLICY notifications_update ON open_ca.notifications FOR UPDATE
+DROP POLICY IF EXISTS notifications_update ON openfin8_ca.notifications;
+CREATE POLICY notifications_update ON openfin8_ca.notifications FOR UPDATE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
 
 -- FC-3: Payment initiation parties (PIP family).
-CREATE TABLE IF NOT EXISTS open_ca.payment_initiation_parties (
+CREATE TABLE IF NOT EXISTS openfin8_ca.payment_initiation_parties (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env_id  UUID NOT NULL,
     party_name      TEXT NOT NULL,
@@ -341,52 +341,52 @@ CREATE TABLE IF NOT EXISTS open_ca.payment_initiation_parties (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-ALTER TABLE open_ca.payment_initiation_parties ENABLE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.payment_initiation_parties FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS pip_select ON open_ca.payment_initiation_parties;
-CREATE POLICY pip_select ON open_ca.payment_initiation_parties FOR SELECT
+ALTER TABLE openfin8_ca.payment_initiation_parties ENABLE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.payment_initiation_parties FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS pip_select ON openfin8_ca.payment_initiation_parties;
+CREATE POLICY pip_select ON openfin8_ca.payment_initiation_parties FOR SELECT
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS pip_insert ON open_ca.payment_initiation_parties;
-CREATE POLICY pip_insert ON open_ca.payment_initiation_parties FOR INSERT
+DROP POLICY IF EXISTS pip_insert ON openfin8_ca.payment_initiation_parties;
+CREATE POLICY pip_insert ON openfin8_ca.payment_initiation_parties FOR INSERT
     WITH CHECK (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS pip_update ON open_ca.payment_initiation_parties;
-CREATE POLICY pip_update ON open_ca.payment_initiation_parties FOR UPDATE
+DROP POLICY IF EXISTS pip_update ON openfin8_ca.payment_initiation_parties;
+CREATE POLICY pip_update ON openfin8_ca.payment_initiation_parties FOR UPDATE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS pip_delete ON open_ca.payment_initiation_parties;
-CREATE POLICY pip_delete ON open_ca.payment_initiation_parties FOR DELETE
+DROP POLICY IF EXISTS pip_delete ON openfin8_ca.payment_initiation_parties;
+CREATE POLICY pip_delete ON openfin8_ca.payment_initiation_parties FOR DELETE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
 
 -- FC-3: PIP payment-method registrations.
-CREATE TABLE IF NOT EXISTS open_ca.pip_payment_methods (
+CREATE TABLE IF NOT EXISTS openfin8_ca.pip_payment_methods (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env_id  UUID NOT NULL,
-    party_id        UUID NOT NULL REFERENCES open_ca.payment_initiation_parties(id) ON DELETE CASCADE,
+    party_id        UUID NOT NULL REFERENCES openfin8_ca.payment_initiation_parties(id) ON DELETE CASCADE,
     method_type     TEXT NOT NULL,
     instrument      JSONB NOT NULL DEFAULT '{}',
     status          TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'revoked')),
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-ALTER TABLE open_ca.pip_payment_methods ENABLE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.pip_payment_methods FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS pip_pm_select ON open_ca.pip_payment_methods;
-CREATE POLICY pip_pm_select ON open_ca.pip_payment_methods FOR SELECT
+ALTER TABLE openfin8_ca.pip_payment_methods ENABLE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.pip_payment_methods FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS pip_pm_select ON openfin8_ca.pip_payment_methods;
+CREATE POLICY pip_pm_select ON openfin8_ca.pip_payment_methods FOR SELECT
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS pip_pm_insert ON open_ca.pip_payment_methods;
-CREATE POLICY pip_pm_insert ON open_ca.pip_payment_methods FOR INSERT
+DROP POLICY IF EXISTS pip_pm_insert ON openfin8_ca.pip_payment_methods;
+CREATE POLICY pip_pm_insert ON openfin8_ca.pip_payment_methods FOR INSERT
     WITH CHECK (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS pip_pm_update ON open_ca.pip_payment_methods;
-CREATE POLICY pip_pm_update ON open_ca.pip_payment_methods FOR UPDATE
+DROP POLICY IF EXISTS pip_pm_update ON openfin8_ca.pip_payment_methods;
+CREATE POLICY pip_pm_update ON openfin8_ca.pip_payment_methods FOR UPDATE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS pip_pm_delete ON open_ca.pip_payment_methods;
-CREATE POLICY pip_pm_delete ON open_ca.pip_payment_methods FOR DELETE
+DROP POLICY IF EXISTS pip_pm_delete ON openfin8_ca.pip_payment_methods;
+CREATE POLICY pip_pm_delete ON openfin8_ca.pip_payment_methods FOR DELETE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
 
 -- FC-7: Consent revocation records (immutable - the revocation event).
-CREATE TABLE IF NOT EXISTS open_ca.consent_revocations (
+CREATE TABLE IF NOT EXISTS openfin8_ca.consent_revocations (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env_id  UUID NOT NULL,
-    consent_id      UUID NOT NULL REFERENCES open_ca.consents(id) ON DELETE CASCADE,
+    consent_id      UUID NOT NULL REFERENCES openfin8_ca.consents(id) ON DELETE CASCADE,
     reason          TEXT NOT NULL CHECK (reason IN ('BUSINESS_RULE', 'OTHER', 'SECURITY_EVENT', 'USER_ACTION')),
     other_reason    TEXT,
     initiator       TEXT NOT NULL CHECK (initiator IN (
@@ -395,17 +395,17 @@ CREATE TABLE IF NOT EXISTS open_ca.consent_revocations (
     )),
     revoked_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-ALTER TABLE open_ca.consent_revocations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.consent_revocations FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS consent_revocations_select ON open_ca.consent_revocations;
-CREATE POLICY consent_revocations_select ON open_ca.consent_revocations FOR SELECT
+ALTER TABLE openfin8_ca.consent_revocations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.consent_revocations FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS consent_revocations_select ON openfin8_ca.consent_revocations;
+CREATE POLICY consent_revocations_select ON openfin8_ca.consent_revocations FOR SELECT
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS consent_revocations_insert ON open_ca.consent_revocations;
-CREATE POLICY consent_revocations_insert ON open_ca.consent_revocations FOR INSERT
+DROP POLICY IF EXISTS consent_revocations_insert ON openfin8_ca.consent_revocations;
+CREATE POLICY consent_revocations_insert ON openfin8_ca.consent_revocations FOR INSERT
     WITH CHECK (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
 
 -- FC-5: Payment network identifier revocations (per paymentNetworkId).
-CREATE TABLE IF NOT EXISTS open_ca.payment_network_revocations (
+CREATE TABLE IF NOT EXISTS openfin8_ca.payment_network_revocations (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env_id  UUID NOT NULL,
     account_id          UUID NOT NULL,
@@ -418,13 +418,13 @@ CREATE TABLE IF NOT EXISTS open_ca.payment_network_revocations (
     )),
     revoked_at          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-ALTER TABLE open_ca.payment_network_revocations ENABLE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.payment_network_revocations FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS pn_revocations_select ON open_ca.payment_network_revocations;
-CREATE POLICY pn_revocations_select ON open_ca.payment_network_revocations FOR SELECT
+ALTER TABLE openfin8_ca.payment_network_revocations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.payment_network_revocations FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS pn_revocations_select ON openfin8_ca.payment_network_revocations;
+CREATE POLICY pn_revocations_select ON openfin8_ca.payment_network_revocations FOR SELECT
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS pn_revocations_insert ON open_ca.payment_network_revocations;
-CREATE POLICY pn_revocations_insert ON open_ca.payment_network_revocations FOR INSERT
+DROP POLICY IF EXISTS pn_revocations_insert ON openfin8_ca.payment_network_revocations;
+CREATE POLICY pn_revocations_insert ON openfin8_ca.payment_network_revocations FOR INSERT
     WITH CHECK (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
 
 -- ── Local outbox (DBX, architecture-principles §6.7) ─────────────────────
@@ -432,12 +432,12 @@ CREATE POLICY pn_revocations_insert ON open_ca.payment_network_revocations FOR I
 -- transaction as the domain change (or via the pool helper on handlers
 -- without an open transaction); the shell's post-commit relay pushes them
 -- to Bus POST /v1/produce (idempotency_key = row id).
--- Generated from sentin8-outbox::outbox_table_sql("open_ca") - the outbox lives
--- in the service's OWN leaf schema (`open_ca`), matching the relay's notify
+-- Generated from sentin8-outbox::outbox_table_sql("openfin8_ca") - the outbox lives
+-- in the service's OWN leaf schema (`openfin8_ca`), matching the relay's notify
 -- channel (`open_ca_outbox_changed`) and the search_path-derived table
 -- resolution; the open_ca_* domain tables live in the SAME schema `open_ca`
 -- (schema-per-service - the leaf schema is the service's primary schema).
-CREATE TABLE IF NOT EXISTS open_ca.outbox (
+CREATE TABLE IF NOT EXISTS openfin8_ca.outbox (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     env_id          UUID NOT NULL,
     event_type      TEXT NOT NULL,
@@ -452,37 +452,37 @@ CREATE TABLE IF NOT EXISTS open_ca.outbox (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_open_ca_outbox_unrelayed
-    ON open_ca.outbox (created_at) WHERE relayed = false;
-ALTER TABLE open_ca.outbox ENABLE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.outbox FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS outbox_select ON open_ca.outbox;
-CREATE POLICY outbox_select ON open_ca.outbox FOR SELECT
+    ON openfin8_ca.outbox (created_at) WHERE relayed = false;
+ALTER TABLE openfin8_ca.outbox ENABLE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.outbox FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS outbox_select ON openfin8_ca.outbox;
+CREATE POLICY outbox_select ON openfin8_ca.outbox FOR SELECT
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS outbox_insert ON open_ca.outbox;
-CREATE POLICY outbox_insert ON open_ca.outbox FOR INSERT
+DROP POLICY IF EXISTS outbox_insert ON openfin8_ca.outbox;
+CREATE POLICY outbox_insert ON openfin8_ca.outbox FOR INSERT
     WITH CHECK (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-DROP POLICY IF EXISTS outbox_update ON open_ca.outbox;
-CREATE POLICY outbox_update ON open_ca.outbox FOR UPDATE
+DROP POLICY IF EXISTS outbox_update ON openfin8_ca.outbox;
+CREATE POLICY outbox_update ON openfin8_ca.outbox FOR UPDATE
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
-CREATE OR REPLACE FUNCTION open_ca.open_ca_notify_outbox() RETURNS TRIGGER
+CREATE OR REPLACE FUNCTION openfin8_ca.open_ca_notify_outbox() RETURNS TRIGGER
 LANGUAGE plpgsql AS $fn$
 BEGIN
     PERFORM pg_notify('open_ca_outbox_changed', '');
     RETURN NEW;
 END;
 $fn$;
-DROP TRIGGER IF EXISTS open_ca_outbox_notify_trigger ON open_ca.outbox;
+DROP TRIGGER IF EXISTS open_ca_outbox_notify_trigger ON openfin8_ca.outbox;
 CREATE TRIGGER open_ca_outbox_notify_trigger
-    AFTER INSERT ON open_ca.outbox
+    AFTER INSERT ON openfin8_ca.outbox
     FOR EACH ROW
-    EXECUTE FUNCTION open_ca.open_ca_notify_outbox();
+    EXECUTE FUNCTION openfin8_ca.open_ca_notify_outbox();
 
 -- ── Local audit journal (DBX §6.8) ────────────────────────────────────────
 -- Spill journal for the canonical audit push: rows written same-tx as the
 -- domain change, pushed to Sys POST /v1/audit (sentin8:sys:audit:write), then
 -- marked pushed. A Sys outage never drops audit.
--- Generated from sentin8-audit::audit_journal_sql("open_ca").
-CREATE TABLE IF NOT EXISTS open_ca.audit_journal (
+-- Generated from sentin8-audit::audit_journal_sql("openfin8_ca").
+CREATE TABLE IF NOT EXISTS openfin8_ca.audit_journal (
     id              UUID PRIMARY KEY,
     env_id          UUID NOT NULL,
     action          TEXT NOT NULL,
@@ -500,16 +500,16 @@ CREATE TABLE IF NOT EXISTS open_ca.audit_journal (
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_open_ca_audit_journal_unpushed
-    ON open_ca.audit_journal (created_at) WHERE pushed = false;
-ALTER TABLE open_ca.audit_journal ENABLE ROW LEVEL SECURITY;
-ALTER TABLE open_ca.audit_journal FORCE ROW LEVEL SECURITY;
-DROP POLICY IF EXISTS audit_journal_dml ON open_ca.audit_journal;
-CREATE POLICY audit_journal_dml ON open_ca.audit_journal
+    ON openfin8_ca.audit_journal (created_at) WHERE pushed = false;
+ALTER TABLE openfin8_ca.audit_journal ENABLE ROW LEVEL SECURITY;
+ALTER TABLE openfin8_ca.audit_journal FORCE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS audit_journal_dml ON openfin8_ca.audit_journal;
+CREATE POLICY audit_journal_dml ON openfin8_ca.audit_journal
     USING (sentin8_context_initialized() AND env_id = sentin8_current_env_id())
     WITH CHECK (sentin8_context_initialized() AND env_id = sentin8_current_env_id());
 
 -- ── Per-service role grants + search_path (F1 - §4.3e) ──────────────────
--- The bank8-open-ca service connects via its own PostgreSQL role (bank8_open_ca_service,
+-- The openfin8-ca service connects via its own PostgreSQL role (openfin8_ca_service,
 -- created + granted by `sentin8-cli vertical init/enroll` from this
 -- service's --print-registration --section=pg_roles). RLS only ENFORCES
 -- when the service does NOT bypass it. These grants give the role table
@@ -520,10 +520,10 @@ CREATE POLICY audit_journal_dml ON open_ca.audit_journal
 -- `vertical enroll` never-clobber block preserves this role-level setting.
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'bank8_open_ca_service') THEN
-        ALTER ROLE bank8_open_ca_service SET search_path = open_ca, public;
-        GRANT USAGE ON SCHEMA open_ca TO bank8_open_ca_service;
-        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA open_ca TO bank8_open_ca_service;
-        GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA open_ca TO bank8_open_ca_service;
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'openfin8_ca_service') THEN
+        ALTER ROLE openfin8_ca_service SET search_path = openfin8_ca, public;
+        GRANT USAGE ON SCHEMA openfin8_ca TO openfin8_ca_service;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA openfin8_ca TO openfin8_ca_service;
+        GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA openfin8_ca TO openfin8_ca_service;
     END IF;
 END $$;

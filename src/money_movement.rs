@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
 //! FDX v6.5 completion - money-movement reads + payees proxy (design §5.1).
@@ -19,7 +19,7 @@ use crate::dtos::*;
 use crate::errors::FdxErrorResponse;
 
 /// The fdx2192payments proxy transport (CERTFREE-8V): the boot-built
-/// `bank8-open-ca-payments` certificate-presenting client, or a loud error 2014
+/// `openfin8-ca-payments` certificate-presenting client, or a loud error 2014
 /// the proxy NEVER degrades to an unauthenticated call.
 fn payments_http(state: &AppState) -> Result<reqwest::Client, Response> {
     state

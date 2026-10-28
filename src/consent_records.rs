@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
 //! FDX v6.5 completion - / consent revocation record + lifecycle
@@ -46,7 +46,7 @@ pub async fn get_consent_revocation(
     Path(consent_id): Path<Uuid>,
 ) -> Result<Json<ConsentRevocationRecord>, Response> {
     let _a = middleware::provider_authz(&state, &headers, None).await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
     set_tenant_context(&mut conn, _a.env_id()).await;
     let row = sqlx::query(
@@ -91,7 +91,7 @@ pub async fn revoke_consent_with_record(
 ) -> Result<StatusCode, Response> {
     let a = middleware::provider_authz(&state, &headers, None).await?;
     validate_revocation(&req)?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5): the tenant context
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5): the tenant context
     // is transaction-local - begin first, then context + statements on
     // that one tx.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
@@ -128,7 +128,7 @@ pub async fn revoke_consent_with_record(
 }
 
 /// `POST /fdx/v6/consents/{consentId}/revoke` - POST alias of the PUT
-/// revocation surface (bank8-open-ca DESIGN.md §4): the recipient-side open-banking instance
+/// revocation surface (openfin8-ca DESIGN.md §4): the recipient-side open-banking instance
 /// calls this with the delegated provider token after revoking its own
 /// registry row, so a fintech-initiated revocation lands on the provider's
 /// grant ledger and takes effect on the next data call. The delegated
@@ -229,7 +229,7 @@ pub async fn update_consent_lifecycle(
         req.lookback_period_days,
     )
     .map_err(FdxErrorResponse::bad_request)?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see revoke_consent_with_record.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see revoke_consent_with_record.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let updated = sqlx::query(

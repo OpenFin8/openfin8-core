@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
-//! Delegated provider-token storage via secret references (bank8-open-ca DESIGN.md §1,
+//! Delegated provider-token storage via secret references (openfin8-ca DESIGN.md §1,
 //! two-ledger model). The recipient-side consent callback exchanges the
 //! authorization code at the provider's AS and stores the resulting access
 //! and refresh tokens on its OWN registry row (`fdx.recipient_consents`) -
@@ -92,7 +92,7 @@ pub fn refresh_token_path(consent_id: Uuid) -> String {
 }
 
 /// Path for one recipient client row's DPoP signing key
-/// (one per `open_ca.recipients` row - the recipient's per-provider client).
+/// (one per `openfin8_ca.recipients` row - the recipient's per-provider client).
 pub fn dpop_key_path(recipient_row_id: Uuid) -> String {
     format!("fdx/recipients/{recipient_row_id}/dpop-key")
 }
@@ -193,8 +193,8 @@ pub async fn load_provider_refresh_token(
 }
 
 /// Store the recipient client's DPoP signing key sealed behind a secret
-/// reference and return the reference URI (bank8-open-ca DESIGN.md §1 - key material
-/// is never a plaintext column). One key per `open_ca.recipients` row (the
+/// reference and return the reference URI (openfin8-ca DESIGN.md §1 - key material
+/// is never a plaintext column). One key per `openfin8_ca.recipients` row (the
 /// recipient's per-provider client). Overwrites in place (key rotation).
 pub fn store_dpop_key(recipient_row_id: Uuid, pem: &str) -> Result<String, String> {
     let secrets = LocalFileSecrets::from_env();
@@ -204,7 +204,7 @@ pub fn store_dpop_key(recipient_row_id: Uuid, pem: &str) -> Result<String, Strin
 }
 
 /// Resolve the recipient client's DPoP signing key PEM from the
-/// `open_ca.recipients` row's sealed reference.
+/// `openfin8_ca.recipients` row's sealed reference.
 pub async fn load_dpop_key(
     conn: &mut sqlx::PgConnection,
     recipient_row_id: Uuid,

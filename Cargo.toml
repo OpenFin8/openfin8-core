@@ -4,16 +4,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 [package]
-name = "bank8-open-core"
-version = "0.2.3"
+name = "openfin8-core"
+version = "0.1.0"
 edition = "2021"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/Bank8-dev/bank8-open-core"
+repository = "https://github.com/OpenFin8/openfin8-core"
 rust-version = "1.85"
-description = "Sentin8 Bank8:OpenCore - the jurisdiction-agnostic open-banking kernel (consent ledger, recipient registry, CSDF, notifications, admin) embedded by every bank8-open-* adapter."
+description = "Sentin8 OpenFin8:Core - the jurisdiction-agnostic open-banking kernel (consent ledger, recipient registry, CSDF, notifications, admin) embedded by every bank8-open-* adapter."
 
 [lib]
-name = "bank8_open_core"
+name = "openfin8_core"
 path = "src/lib.rs"
 
 [dependencies]

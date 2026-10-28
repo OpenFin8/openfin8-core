@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
-//! Sentin8:Bus consumers (bank8-open-ca DESIGN.md §2) - two stream families:
+//! Sentin8:Bus consumers (openfin8-ca DESIGN.md §2) - two stream families:
 //!
 //! * `sys` - `sentin8:sys:service:updated` events: when the `fdx` service
 //!   is enabled for an org/env, the consumer auto-registers an FDX
@@ -159,7 +159,7 @@ async fn sse_loop(
             };
 
             // Family dispatch: sys → env-init, auth → grant seed
-            // (bank8-open-ca DESIGN.md §2 - two families, one loop shape).
+            // (openfin8-ca DESIGN.md §2 - two families, one loop shape).
             match family {
                 "sys" => handle_envinit_message(pool, &msg, &profile).await,
                 "auth" => handle_grant_message(pool, &msg, profile).await,
@@ -299,7 +299,7 @@ async fn ensure_provider_profile(pool: &PgPool, env_id: uuid::Uuid, fdx_version:
 /// tenant. Payload-complete envelope from Sentin8:Auth (auth DESIGN §4):
 /// `{grant_id, client_id, user_id, env_id, scope, state,
 /// selected_account_ids}`. The `state` is the recipient's opaque OAuth
-/// state - for Bank8:OpenCA consents it is `"<consent handle>|<app origin>"`
+/// state - for OpenFin8:CA consents it is `"<consent handle>|<app origin>"`
 /// (packed at PAR time by the recipient's consent start); only the handle
 /// segment identifies the flow.
 /// Non-FDX grants (any other client's `state`) are seeded as plain grant
@@ -492,7 +492,7 @@ async fn handle_grant_message(
 }
 
 /// Dispatch a single Bus message (sys family). When
-/// `sentin8:sys:service:updated` fires for `service == "open-ca"` and
+/// `sentin8:sys:service:updated` fires for `service == "openfin8-ca"` and
 /// `enabled == true`, auto-register the FDX provider profile for the
 /// target org/env.
 async fn handle_envinit_message(
@@ -604,7 +604,7 @@ struct TenantSnapshot {
     auth_domain: Option<String>,
 }
 
-/// The shared cert-presenting `bank8-open-ca-sys` transport (built once per
+/// The shared cert-presenting `openfin8-ca-sys` transport (built once per
 /// process, CERTFREE-4V): the workload certificate presents in the TLS
 /// handshake - Sys's TLS layer authenticates it and the enroll-published
 /// registry map authorizes `sentin8:sys:tenants:read`. No M2M token
@@ -614,7 +614,7 @@ async fn sys_snapshot_http() -> Result<reqwest::Client, String> {
     let ca_path = sentin8::auth::m2m::platform_ca_path();
     let cert = sentin8::auth::m2m::ensure_workload_certificate(
         &cfg.sentin8_auth_issuer(),
-        "bank8-open-ca-sys",
+        "openfin8-ca-sys",
         &ca_path,
     )
     .await
@@ -628,7 +628,7 @@ async fn sys_snapshot_http() -> Result<reqwest::Client, String> {
 }
 
 /// Fetch the tenant snapshot from Sys (`GET /v1/tenants/{env_id}`) via the
-/// cert-presenting `bank8-open-ca-sys` workload (CERTFREE-4V - no M2M token;
+/// cert-presenting `openfin8-ca-sys` workload (CERTFREE-4V - no M2M token;
 /// scope `sentin8:sys:tenants:read` rides the registry map).
 /// `Ok(None)` = 404 (env unknown or fdx not enabled there - scoped
 /// discovery); `Err` = transport/5xx (retryable).

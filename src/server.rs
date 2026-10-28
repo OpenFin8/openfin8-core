@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
 //! Axum server setup for FDX.
@@ -57,13 +57,13 @@ pub async fn build_state(
     // certificates (the static BANK8_*_TOKEN dev convention is retired;
     // the receiving gates resolve the workloads against the registry
     // map). None → the proxy lanes 503 loudly at the handler gate.
-    match build_workload_http(&config.sentin8_auth_issuer, "bank8-open-ca-ledger").await {
+    match build_workload_http(&config.sentin8_auth_issuer, "openfin8-ca-ledger").await {
         Ok(http) => config.ledger_http = Some(http),
         Err(e) => {
             tracing::warn!(error = %e, "fdx ledger proxy transport unavailable - account/balance/transaction reads degraded")
         }
     }
-    match build_workload_http(&config.sentin8_auth_issuer, "bank8-open-ca-payments").await {
+    match build_workload_http(&config.sentin8_auth_issuer, "openfin8-ca-payments").await {
         Ok(http) => config.payments_http = Some(http),
         Err(e) => {
             tracing::warn!(error = %e, "fdx payments proxy transport unavailable - transfers/payments degraded")
@@ -122,7 +122,7 @@ pub async fn build_state(
             tracing::warn!(error = %e, "failed to register FDX step handler profile with Flow")
         }
     }
-    // Cert-presenting Bus client (CERTFREE-4V): the `open-ca` workload
+    // Cert-presenting Bus client (CERTFREE-4V): the `openfin8-ca` workload
     // CERTIFICATE is the identity - no DCR, no token (auth DESIGN
     // §4.3f); the mint retries while the fleet boots.
     let bus_client = loop {
@@ -314,7 +314,7 @@ pub fn routes(
         )
         // : revocation by the delegated subject (the recipient plane calls
         // this with the delegated provider token after revoking its
-        // registry row - bank8-open-ca DESIGN.md §4; POST alias of the PUT
+        // registry row - openfin8-ca DESIGN.md §4; POST alias of the PUT
         // revocation surface above for the RFW renderer + external
         // recipient clients).
         .route(

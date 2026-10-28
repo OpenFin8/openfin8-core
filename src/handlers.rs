@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
 //! FDX HTTP handlers - consent service, provider API, recipient API.
@@ -27,7 +27,7 @@ use crate::flow::ProxyBackResponse;
 use crate::middleware::{self, consent_filter_from_headers, minimize_response};
 
 /// The fdx→ledger proxy transport (CERTFREE-8V): the boot-built
-/// `bank8-open-ca-ledger` certificate-presenting client, or a loud error -
+/// `openfin8-ca-ledger` certificate-presenting client, or a loud error -
 /// the proxy NEVER degrades to an unauthenticated call.
 fn ledger_http(state: &AppState) -> Result<reqwest::Client, FdxErrorResponse> {
     state.config.ledger_http().cloned().ok_or_else(|| {
@@ -38,7 +38,7 @@ fn ledger_http(state: &AppState) -> Result<reqwest::Client, FdxErrorResponse> {
 }
 
 /// The fdx→payments proxy transport (CERTFREE-8V): the boot-built
-/// `bank8-open-ca-payments` certificate-presenting client, or a loud error.
+/// `openfin8-ca-payments` certificate-presenting client, or a loud error.
 fn payments_http(state: &AppState) -> Result<reqwest::Client, FdxErrorResponse> {
     state.config.payments_http().cloned().ok_or_else(|| {
         FdxErrorResponse::internal(
@@ -54,13 +54,13 @@ pub struct AppState {
     pub pool: sqlx::PgPool,
     /// Shield policy engine : step 5 is the ONLY gate
     /// handlers verify the token (steps 1-4) then evaluate a
-    /// `bank8:open-ca:<resource>:<action>` target; no JWT scope check remains.
+    /// `openfin8:ca:<resource>:<action>` target; no JWT scope check remains.
     pub policy: Arc<crate::policy::Engine>,
     /// Shared Sentin8:Policy admin surface (§3.6) - same engine
     /// instance the request path evaluates.
     pub admin: sentin8::shield::admin::SharedAdminState,
     /// Bounded TTL cache behind `GET /fdx/v6/certification-metrics`
-    /// (bank8-open-ca DESIGN.md §10). Sums over `audit_events` + consents are
+    /// (openfin8-ca DESIGN.md §10). Sums over `audit_events` + consents are
     /// read-only projections; a short TTL bounds their staleness without
     /// event-driven invalidation.
     pub cert_metrics_cache: CertMetricsCache,
@@ -182,7 +182,7 @@ pub async fn create_consent(
         sentin8::shield::EvalTarget::new(state.config.profile.target("consents:write")),
     )
     .await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let expires_at = req
@@ -285,7 +285,7 @@ pub async fn get_consent(
         sentin8::shield::EvalTarget::new(state.config.profile.target("consents:read")),
     )
     .await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see list_consents.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see list_consents.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let row = sqlx::query(
@@ -320,7 +320,7 @@ pub async fn revoke_consent(
         sentin8::shield::EvalTarget::new(state.config.profile.target("consents:write")),
     )
     .await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let row = sqlx::query(
@@ -345,7 +345,7 @@ pub async fn revoke_consent(
 /// The incoming Bearer (the bank's own customer token OR a delegated
 /// recipient token - both carry the provider customer as `sub`) is
 /// forwarded to Ledger, so RLS scopes the rows to the consenting
-/// customer either way (bank8-open-ca DESIGN.md §1 - the consent grant keys on the
+/// customer either way (openfin8-ca DESIGN.md §1 - the consent grant keys on the
 /// token subject).
 #[utoipa::path(
     get,
@@ -491,7 +491,7 @@ pub async fn get_fdx_consent(
     Path(consent_id): Path<Uuid>,
 ) -> Result<Json<ConsentIntrospection>, Response> {
     let _a = middleware::provider_authz(&state, &headers, None).await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state
         .pool
         .begin()
@@ -546,7 +546,7 @@ pub async fn revoke_fdx_consent(
     Path(consent_id): Path<Uuid>,
 ) -> Result<Json<serde_json::Value>, Response> {
     let a = middleware::provider_authz(&state, &headers, None).await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state
         .pool
         .begin()
@@ -1017,7 +1017,7 @@ pub async fn get_certification_metrics(
     if let Some(cached) = state.cert_metrics_cache.get(&cache_key) {
         return Ok(Json(cached));
     }
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see list_consents.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see list_consents.
     let mut conn = state
         .pool
         .begin()
@@ -1063,11 +1063,11 @@ pub struct StartConsentRequest {
 }
 
 /// `POST /v1/recipient/consents/start` - start consent authorization.
-/// The two-ledger recipient flow (bank8-open-ca DESIGN.md §1 + §4 consent-flow
+/// The two-ledger recipient flow (openfin8-ca DESIGN.md §1 + §4 consent-flow
 /// sequence): the recipient-side open-banking instance writes its OWN registry
 /// (a `pending` row in `recipient_consents`, in the recipient tenant),
 /// ensures its per-provider OAuth client exists at the provider's
-/// authorization server (DCR, cached in `open_ca.recipients`), and pushes a
+/// authorization server (DCR, cached in `openfin8_ca.recipients`), and pushes a
 /// PAR request whose `state` carries `"<consent handle>|<app origin>"`.
 /// The AS's authorize screen runs the ceremony; the browser redirect
 /// comes back to THIS instance's `/fdx/consents/callback` (the
@@ -1099,7 +1099,7 @@ pub async fn start_consent(
         sentin8::shield::EvalTarget::new(state.config.profile.target("recipient:write")),
     )
     .await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5): the tenant context
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5): the tenant context
     // is transaction-local (`set_config(..., true)`) - it must live on
     // the SAME tx as the INSERT, or the row lands with
     // `context_initialized=false` and FORCE-RLS rejects it.
@@ -1170,7 +1170,7 @@ pub async fn start_consent(
 
     // The OAuth client belongs to the RECIPIENT (DESIGN.md §1): ensure a
     // public client exists at the provider's AS, cached per
-    // (recipient env, provider) in `open_ca.recipients`. The redirect_uri
+    // (recipient env, provider) in `openfin8_ca.recipients`. The redirect_uri
     // registered there is THIS instance's env callback host.
     let (client_id, callback_url) =
         ensure_recipient_client(&state, a.env_id(), &req.provider_id, &provider_issuer).await?;
@@ -1323,7 +1323,7 @@ pub async fn consent_callback(
         }
     };
 
-    // RECIPIENT-OWNED CALLBACK (two-ledger model, bank8-open-ca DESIGN.md §1): the
+    // RECIPIENT-OWNED CALLBACK (two-ledger model, openfin8-ca DESIGN.md §1): the
     // redirect_uri registered for the recipient's client is THIS env's
     // callback host, so the browser lands on the recipient-side instance.
     // The row lives in the RECIPIENT tenant: seed the tenant context from
@@ -1347,7 +1347,7 @@ pub async fn consent_callback(
     set_tenant_context(&mut conn, tls_env).await;
 
     // Resolve the registry row + the flow's provider identity on ONE
-    // transaction (bank8-open-ca DESIGN.md §5 same-transaction discipline).
+    // transaction (openfin8-ca DESIGN.md §5 same-transaction discipline).
     let reg_row = sqlx::query(
         r#"SELECT provider_id, code_verifier, client_id FROM recipient_consents
             WHERE id = $1"#,
@@ -1438,7 +1438,7 @@ pub async fn consent_callback(
                 .unwrap_or_default();
             if !provider_issuer.is_empty() && !client_id.is_empty() {
                 // The DPoP key lives on the recipient's per-provider
-                // client row (`open_ca.recipients`) - sealed reference.
+                // client row (`openfin8_ca.recipients`) - sealed reference.
                 let dpop_key_pem: Option<String> =
                     load_recipient_dpop_key(&state, tls_env, &provider_id).await;
 
@@ -1629,7 +1629,7 @@ pub async fn refresh_consent(
         sentin8::shield::EvalTarget::new(state.config.profile.target("recipient:write")),
     )
     .await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5): the registry row
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5): the registry row
     // lives in THIS (recipient) tenant - context + read on one tx.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
@@ -1677,7 +1677,7 @@ pub async fn refresh_consent(
             .ok()
             .flatten()
             .unwrap_or_default();
-        // The recipient client's DPoP key (`open_ca.recipients` - sealed).
+        // The recipient client's DPoP key (`openfin8_ca.recipients` - sealed).
         let dpop_key_pem: Option<String> =
             load_recipient_dpop_key(&state, a.env_id(), &provider_id).await;
 
@@ -1808,7 +1808,7 @@ pub async fn revoke_recipient_consent(
         sentin8::shield::EvalTarget::new(state.config.profile.target("recipient:write")),
     )
     .await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5): the registry row
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5): the registry row
     // lives in THIS (recipient) tenant.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
@@ -2209,7 +2209,7 @@ pub async fn get_provider_profile(
         sentin8::shield::EvalTarget::new(state.config.profile.target("provider:write")),
     )
     .await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see list_consents.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see list_consents.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let row = sqlx::query(
@@ -2267,7 +2267,7 @@ pub async fn update_provider_profile(
         sentin8::shield::EvalTarget::new(state.config.profile.target("provider:write")),
     )
     .await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let row = sqlx::query(
@@ -2312,7 +2312,7 @@ pub async fn list_recipients(
         sentin8::shield::EvalTarget::new(state.config.profile.target("provider:write")),
     )
     .await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see list_consents.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see list_consents.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let rows = sqlx::query(
@@ -2373,7 +2373,7 @@ pub async fn list_admin_audit(
         sentin8::shield::EvalTarget::new(state.config.profile.target("provider:write")),
     )
     .await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see list_consents.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see list_consents.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let rows = sqlx::query(
@@ -2420,7 +2420,7 @@ pub async fn activate_recipient(
         sentin8::shield::EvalTarget::new(state.config.profile.target("provider:write")),
     )
     .await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let row = sqlx::query(
@@ -2468,7 +2468,7 @@ pub async fn suspend_recipient(
         sentin8::shield::EvalTarget::new(state.config.profile.target("provider:write")),
     )
     .await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let row = sqlx::query(
@@ -2653,7 +2653,7 @@ pub async fn execute_step(
 pub async fn health() -> Json<ServiceHealth> {
     Json(ServiceHealth {
         status: "ok".into(),
-        service: "open-ca".into(),
+        service: "openfin8-ca".into(),
         version: sentin8::build_info::id().into(),
         build: sentin8::build_info::build_hash().into(),
     })
@@ -2699,8 +2699,8 @@ fn pkce_s256_challenge(verifier: &str) -> String {
 }
 
 /// Derive a service URL for the given provider env via the runtime registry
-/// (bank8-open-ca design §4.3c). Used for both the consent callback URL
-/// (`bank8-open-ca`) and the provider Ledger URL (`bank8-ledger`).
+/// (openfin8-ca design §4.3c). Used for both the consent callback URL
+/// (`openfin8-ca`) and the provider Ledger URL (`bank8-ledger`).
 async fn provider_env_fdx_base_url(
     pool: &sqlx::PgPool,
     provider_env_id: Uuid,
@@ -2733,7 +2733,7 @@ async fn provider_env_fdx_base_url(
 /// Derive THIS instance's env callback URL - the redirect_uri the
 /// recipient's OAuth client registers at the provider's AS and the exact
 /// string the PAR + token exchanges must echo (RFC 6749 exact match).
-/// Same derivation the env-init DCR registration uses (bank8-open-ca DESIGN.md §1:
+/// Same derivation the env-init DCR registration uses (openfin8-ca DESIGN.md §1:
 /// the callback belongs to the RECIPIENT, so it derives from the
 /// recipient's own env identity - never the provider's).
 async fn own_env_callback_url(state: &AppState, env_id: Uuid) -> String {
@@ -2757,7 +2757,7 @@ async fn own_env_callback_url(state: &AppState, env_id: Uuid) -> String {
 
 /// Ensure the RECIPIENT's per-provider OAuth client exists at the
 /// provider's authorization server (DCR, RFC 7591) and return
-/// `(client_id, callback_url)`. Cached in `open_ca.recipients` per
+/// `(client_id, callback_url)`. Cached in `openfin8_ca.recipients` per
 /// (recipient env, provider) - one public client per provider the
 /// fintech connects to, exactly like a real third-party recipient
 /// registers at each bank. The registered redirect_uri is THIS env's
@@ -2912,7 +2912,7 @@ async fn ensure_recipient_client(
 }
 
 /// Load the recipient's DPoP signing key PEM for the given provider
-/// (sealed reference on the `open_ca.recipients` row).
+/// (sealed reference on the `openfin8_ca.recipients` row).
 async fn load_recipient_dpop_key(
     state: &AppState,
     env_id: Uuid,
@@ -2949,7 +2949,7 @@ fn urlencoding(s: &str) -> String {
 }
 
 /// Append an event to the service's LOCAL outbox (DBX producer path,
-/// architecture-principles §6.7 - bank8-open-ca design §12).
+/// architecture-principles §6.7 - openfin8-ca design §12).
 /// Inserts a `fdx.outbox` row that the shell's post-commit relay
 /// drains to Bus `POST /v1/produce` (idempotency_key = row id). Call this
 /// after the domain insert/update/delete succeeds. The outbox is
@@ -2963,7 +2963,7 @@ pub(crate) async fn emit_event(
     payload: serde_json::Value,
 ) {
     if let Err(e) =
-        sentin8::bus::outbox::insert_outbox_row_pool(pool, env_id, "open-ca", event_type, &payload)
+        sentin8::bus::outbox::insert_outbox_row_pool(pool, env_id, "openfin8-ca", event_type, &payload)
             .await
     {
         tracing::warn!(error = %e, event_type = %event_type, "open-banking: failed to emit outbox event");

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
 //! FDX v6.5 completion - payment-initiation parties (PIP family, design §5.1).
@@ -70,7 +70,7 @@ pub async fn create_pip_party(
     Json(req): Json<CreatePipPartyRequest>,
 ) -> Result<Json<PipPartyResponse>, Response> {
     let a = middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Payments)).await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let row = sqlx::query(
@@ -129,7 +129,7 @@ pub async fn get_pip_party(
 ) -> Result<Json<PipPartyDetail>, Response> {
     let _a =
         middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Payments)).await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
     set_tenant_context(&mut conn, _a.env_id()).await;
     let row = sqlx::query(
@@ -182,7 +182,7 @@ pub async fn create_pip_payment_method(
     Json(req): Json<CreatePipPaymentMethodRequest>,
 ) -> Result<Json<PipPaymentMethodRegistered>, Response> {
     let a = middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Payments)).await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let row = sqlx::query(
@@ -224,7 +224,7 @@ pub async fn revoke_pip_payment_method(
     Path((party_id, reg_id)): Path<(Uuid, Uuid)>,
 ) -> Result<Json<PipPaymentMethodRevoked>, Response> {
     let a = middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Payments)).await?;
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5) - see start_consent.
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(db_err)?;
     set_tenant_context(&mut conn, a.env_id()).await;
     let updated = sqlx::query(

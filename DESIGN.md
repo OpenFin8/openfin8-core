@@ -1,16 +1,16 @@
-# bank8-open-core - Detailed Design Document
+# openfin8-core - Detailed Design Document
 
 > Status: **PROPOSED** - the extraction design for the multi-country open
 > banking platform (OBARCH-1). This crate is the shared foundation under
-> `bank8-open-us`, `bank8-open-ca`, and `bank8-open-uk` (with
+> `openfin8-us`, `openfin8-ca`, and `openfin8-uk` (with
 > `bank8-open-br/eu/au` to follow the same contract). Reading order:
-> this document, then the per-country adapter designs (`bank8-open-us`,
-> `bank8-open-ca`, `bank8-open-uk`).
+> this document, then the per-country adapter designs (`openfin8-us`,
+> `openfin8-ca`, `openfin8-uk`).
 
 ## 1. Scope & Context
 
-**What this crate is.** `bank8-open-core` is the jurisdiction-agnostic
-open-banking kernel: the consent ledger, the recipient registry, the
+**What this crate is.** `openfin8-core` is the jurisdiction-agnostic
+open-finance kernel: the consent ledger, the recipient registry, the
 CSDF data-minimization engine, the notification delivery worker, the
 admin/RFW page framework, the audit discipline, and the wire-agnostic
 service traits that country adapters implement. It is a **library
@@ -19,7 +19,7 @@ crate, not a service binary** - no process runs on it; each
 contract table, and its registration data.
 
 **Where it lives.** In the `bank8-sdk` repository as
-`crates/open/core` (`bank8-open-core`), sibling to the existing
+`crates/open/core` (`openfin8-core`), sibling to the existing
 per-service contracts crates, re-exported through the `bank8` facade.
 Rationale: (a) it is shared library code with no deployment identity
 of its own - the same positioning rule as the SDK contracts crates
@@ -61,11 +61,11 @@ standard-specific wire format.
 ```mermaid
 graph TD
     subgraph adapters["country adapters (binaries)"]
-        US["bank8-open-us<br/>FDX v6 wire"]
-        CA["bank8-open-ca<br/>FDX/CDX Canada profile"]
-        UK["bank8-open-uk<br/>OBIE R/W v3.1/4.0 wire"]
+        US["openfin8-us<br/>FDX v6 wire"]
+        CA["openfin8-ca<br/>FDX/CDX Canada profile"]
+        UK["openfin8-uk<br/>OBIE R/W v3.1/4.0 wire"]
     end
-    CORE["bank8-open-core<br/>(library crate)"]
+    CORE["openfin8-core<br/>(library crate)"]
     subgraph platform["Sentin8 platform"]
         AUTH["Sentin8:Auth"]
         BUS["Sentin8:Bus"]
@@ -254,7 +254,7 @@ Two layers, deliberately:
 
 1. **Per-environment service enablement** - unchanged platform
    mechanism. Each adapter is its own `service_type`
-   (`bank8:open-us`, ...) in `catalog.json` + its own
+   (`openfin8:us`, ...) in `catalog.json` + its own
    `service-registration.json`; `sys.services.config` JSONB carries
    per-env settings (default version, capability toggles) read at
    env-init through the existing `sentin8:sys:service:updated`
@@ -295,7 +295,7 @@ by construction.
   machines, route-contract matching) + adapter integration tests
   (ceremony against scratch Auth, route table validation) + the
   e2e recipient journey per country in `bank8-e2e`.
-- **Migration**: `bank8-fdx` becomes `bank8-open-us` in-place
+- **Migration**: `bank8-fdx` becomes `openfin8-us` in-place
   (service_type, schema rename `fdx` → `open_us` with data
   migration, event family rename). No parallel-run period - the
   rename ships as one atomic vertical release.

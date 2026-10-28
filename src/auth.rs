@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
 //! Auth token verification for Fdx8.
@@ -9,7 +9,7 @@
 //!  : step 5 is the ONLY gate (policy design §4.3). The
 //! `require_any_scope` helper is gone - handlers verify the token
 //! (steps 1-4) with [`verify_token`], then evaluate a
-//! `bank8:open-ca:<resource>:<action>` Shield action via `crate::policy::require`.
+//! `openfin8:ca:<resource>:<action>` Shield action via `crate::policy::require`.
 //! The consent-binding rule (holder relation on the consent object) is
 //! authored as a tenant Shield set over the ReBAC substrate - never a
 //! handler scope check.

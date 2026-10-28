@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
 //! Provider pipeline middleware for `/fdx/v6/*` routes (design §4.2).
@@ -34,8 +34,8 @@ use crate::validation::validate_fdx_request;
 pub fn route_cluster(method: &str, path: &str) -> Option<(String, Option<csdf::DataCluster>)> {
     let _ = method;
     // Version-parameterized prefix (OBARCH-3/4): "/fdx/v{major}" from
-    // BANK8_OPEN_CA_VERSION - the shape matches any major segment.
-    let major = std::env::var("BANK8_OPEN_CA_VERSION")
+    // OPENFIN8_CA_VERSION - the shape matches any major segment.
+    let major = std::env::var("OPENFIN8_CA_VERSION")
         .unwrap_or_else(|_| "6.5".into())
         .split('.')
         .next()
@@ -94,8 +94,8 @@ pub async fn audit_data_call(pool: &sqlx::PgPool, env_id: Uuid, actor: &str, rou
 }
 
 /// Map a route to the OAuth scope that grants its data cluster (design §6.1).
-/// OBARCH-1: scope strings are profile-scoped (`bank8:open-us:*` vs
-/// `bank8:open-ca:*`) - the caller supplies the jurisdiction profile.
+/// OBARCH-1: scope strings are profile-scoped (`openfin8:us:*` vs
+/// `openfin8:ca:*`) - the caller supplies the jurisdiction profile.
 fn scope_for_cluster(profile: &crate::profile::Profile, cluster: csdf::DataCluster) -> String {
     match cluster {
         csdf::DataCluster::Accounts => profile.scope("accountbasic:read"),
@@ -118,7 +118,7 @@ fn scope_for_cluster(profile: &crate::profile::Profile, cluster: csdf::DataClust
 /// the SAME grant row: the customer's grant governs what data may leave,
 /// regardless of which client presents a token for it.
 pub async fn consent_filter(state: &AppState, _a: &auth::AuthContext) -> CsdfFilter {
-    // Same-transaction discipline (bank8-open-ca DESIGN.md §5): context + lookup on
+    // Same-transaction discipline (openfin8-ca DESIGN.md §5): context + lookup on
     // one tx - a bare autocommit connection loses the transaction-local
     // context and RLS answers with zero consent rows (→ 403 for every
     // provider data call).

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCore
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:Core
 // SPDX-License-Identifier: Apache-2.0
 
 //! The runtime jurisdiction profile (OBARCH-1 §2, OBARCH-4).
@@ -26,22 +26,22 @@ use std::env;
 pub struct Profile {
     /// ISO-ish jurisdiction key: "us", "ca" (future: "uk", "br", "eu", "au").
     pub jurisdiction: &'static str,
-    /// The service type: "bank8:open-us", "bank8:open-ca".
+    /// The service type: "openfin8:us", "openfin8:ca".
     pub service_type: &'static str,
-    /// The binary + repo name: "bank8-open-us", "bank8-open-ca".
+    /// The binary + repo name: "openfin8-us", "openfin8-ca".
     pub binary: &'static str,
-    /// The env-var prefix: "BANK8_OPEN_US", "BANK8_OPEN_CA".
+    /// The env-var prefix: "OPENFIN8_US", "OPENFIN8_CA".
     pub env_prefix: &'static str,
-    /// The event family (Bus): "open-us", "open-ca" - the producer
+    /// The event family (Bus): "openfin8-us", "openfin8-ca" - the producer
     /// family of `bank8:{family}:{resource}:{operation}` events.
     pub family: &'static str,
     /// The Bus stream family default (`{env_prefix}_STREAM_FAMILY`
     /// override still wins).
     pub stream_family: &'static str,
-    /// The DB schema this jurisdiction owns: "open_us", "open_ca".
+    /// The DB schema this jurisdiction owns: "openfin8_us", "openfin8_ca".
     pub schema: &'static str,
-    /// The Shield scope vocabulary prefix: "bank8:open-us",
-    /// "bank8:open-ca" - `format!("{prefix}:accountbasic:read")` etc.
+    /// The Shield scope vocabulary prefix: "openfin8:us",
+    /// "openfin8:ca" - `format!("{prefix}:accountbasic:read")` etc.
     pub scope_prefix: &'static str,
     /// The FDX version this deployment serves ("6.5") - version-
     /// configurable per environment (OBARCH-2/3).
@@ -89,7 +89,7 @@ impl Profile {
     }
 
     /// The workload short name for Bus/TLS workload identities
-    /// ("fdx"-equivalent in the old service: "open-us"/"open-ca").
+    /// ("fdx"-equivalent in the old service: "openfin8-us"/"openfin8-ca").
     pub fn workload(&self) -> &'static str {
         // The stream family IS the workload short name in this
         // platform's DCR/TLS registry (fdx used "fdx" for both).
@@ -106,14 +106,14 @@ impl Profile {
     pub fn canada() -> Self {
         Self {
             jurisdiction: "ca",
-            service_type: "bank8:open-ca",
-            binary: "bank8-open-ca",
-            env_prefix: "BANK8_OPEN_CA",
-            family: "open-ca",
-            stream_family: "open-ca",
-            schema: "open_ca",
-            scope_prefix: "bank8:open-ca",
-            fdx_version: env::var("BANK8_OPEN_CA_VERSION").unwrap_or_else(|_| "6.5".into()),
+            service_type: "openfin8:ca",
+            binary: "openfin8-ca",
+            env_prefix: "OPENFIN8_CA",
+            family: "openfin8-ca",
+            stream_family: "openfin8-ca",
+            schema: "openfin8_ca",
+            scope_prefix: "openfin8:ca",
+            fdx_version: env::var("OPENFIN8_CA_VERSION").unwrap_or_else(|_| "6.5".into()),
         }
     }
 
@@ -121,14 +121,14 @@ impl Profile {
     pub fn united_states() -> Self {
         Self {
             jurisdiction: "us",
-            service_type: "bank8:open-us",
-            binary: "bank8-open-us",
-            env_prefix: "BANK8_OPEN_US",
-            family: "open-us",
-            stream_family: "open-us",
-            schema: "open_us",
-            scope_prefix: "bank8:open-us",
-            fdx_version: env::var("BANK8_OPEN_US_VERSION").unwrap_or_else(|_| "6.5".into()),
+            service_type: "openfin8:us",
+            binary: "openfin8-us",
+            env_prefix: "OPENFIN8_US",
+            family: "openfin8-us",
+            stream_family: "openfin8-us",
+            schema: "openfin8_us",
+            scope_prefix: "openfin8:us",
+            fdx_version: env::var("OPENFIN8_US_VERSION").unwrap_or_else(|_| "6.5".into()),
         }
     }
 }

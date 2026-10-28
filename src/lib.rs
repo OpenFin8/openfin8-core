@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCore
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:Core
 // SPDX-License-Identifier: Apache-2.0
 
-//! # bank8-open-core
+//! # openfin8-core
 //!
-//! The jurisdiction-agnostic open-banking kernel embedded by every
-//! `bank8-open-*` adapter (`bank8-open-us`, `bank8-open-ca`,
-//! `bank8-open-uk`, and the adapters to follow). See `DESIGN.md`
+//! The jurisdiction-agnostic open-finance kernel embedded by every
+//! OpenFin8 adapter (`openfin8-us`, `openfin8-ca`,
+//! `openfin8-uk`, and the adapters to follow). See `DESIGN.md`
 //! (OBARCH-1) for the full design.
 //!
 //! This is a LIBRARY crate: no process runs on it. Each adapter

@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCore
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:Core
 // SPDX-License-Identifier: Apache-2.0
 
 //! Open-banking service configuration (OBARCH-1): the shared
@@ -27,16 +27,16 @@ pub struct Fdx8Config {
     pub database_url: String,
     pub sentin8_auth_issuer: String,
     pub sentin8_auth_jwks_url: String,
-    /// FDX's own external URL (e.g. https://bank8-open-ca.ops.sys.local.sentin8.dev) - used for
+    /// FDX's own external URL (e.g. https://openfin8-ca.ops.sys.local.sentin8.dev) - used for
     /// consent authorize URLs that FDX serves itself.
     pub fdx_base_url: String,
     pub ledger_url: String,
     /// Certificate-presenting transport for the fdx→ledger proxy calls
-    /// (workload `bank8-open-ca-ledger`; CERTFREE-8V - no static token).
+    /// (workload `openfin8-ca-ledger`; CERTFREE-8V - no static token).
     pub ledger_http: Option<reqwest::Client>,
     pub payments_url: String,
     /// Certificate-presenting transport for the fdx→payments proxy calls
-    /// (workload `bank8-open-ca-payments`; CERTFREE-8V - no static token).
+    /// (workload `openfin8-ca-payments`; CERTFREE-8V - no static token).
     pub payments_http: Option<reqwest::Client>,
     pub sentin8_bus_url: String,
     pub stream_family: String,
@@ -158,7 +158,7 @@ impl Fdx8Config {
     }
 
     /// Certificate-presenting transport for the fdx→ledger proxy
-    /// (workload `bank8-open-ca-ledger`; CERTFREE-8V). `None` until the
+    /// (workload `openfin8-ca-ledger`; CERTFREE-8V). `None` until the
     /// boot mint succeeds - the proxy lanes 503 loudly rather than
     /// degrading to an unauthenticated call.
     pub fn ledger_http(&self) -> Option<&reqwest::Client> {
@@ -166,7 +166,7 @@ impl Fdx8Config {
     }
 
     /// Certificate-presenting transport for the fdx→payments proxy
-    /// (workload `bank8-open-ca-payments`; CERTFREE-8V).
+    /// (workload `openfin8-ca-payments`; CERTFREE-8V).
     pub fn payments_http(&self) -> Option<&reqwest::Client> {
         self.payments_http.as_ref()
     }

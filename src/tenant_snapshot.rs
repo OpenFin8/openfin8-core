@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
 //! Sys tenant-snapshot client for fdx (VDC §VDC.5).
@@ -10,7 +10,7 @@
 //! joins never existed in the vertical's own database (VDC-2) and always
 //! returned empty. The sanctioned on-demand read is Sys's tenant-snapshot
 //! API (`GET /v1/tenants/{env_id}`) via the cert-presenting
-//! `bank8-open-ca-sys` workload (CERTFREE-4V - no M2M token; the scope
+//! `openfin8-ca-sys` workload (CERTFREE-4V - no M2M token; the scope
 //! `sentin8:sys:tenants:read` rides the enroll-published registry map).
 //! Same pattern as the ledger's `tenant_snapshot` module and the event
 //! consumer's `fetch_tenant_snapshot` (peers cannot share a crate).
@@ -23,7 +23,7 @@ pub async fn env_identity(env_id: uuid::Uuid) -> Result<Option<(String, String)>
     let ca_path = sentin8::auth::m2m::platform_ca_path();
     let cert = sentin8::auth::m2m::ensure_workload_certificate(
         &cfg.sentin8_auth_issuer(),
-        "bank8-open-ca-sys",
+        "openfin8-ca-sys",
         &ca_path,
     )
     .await

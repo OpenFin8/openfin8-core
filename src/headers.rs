@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
 //! Story - FDX header handling.
@@ -12,7 +12,7 @@ use axum::http::{HeaderMap, HeaderName, HeaderValue};
 
 /// Standard FDX / FAPI header names.
 pub const X_FAPI_INTERACTION_ID: HeaderName = HeaderName::from_static("x-fapi-interaction-id");
-pub const BANK8_OPEN_CA_API_ACTOR_TYPE: HeaderName = HeaderName::from_static("fdx-api-actor-type");
+pub const OPENFIN8_CA_API_ACTOR_TYPE: HeaderName = HeaderName::from_static("fdx-api-actor-type");
 pub const IDEMPOTENCY_KEY: HeaderName = HeaderName::from_static("idempotency-key");
 
 /// Parsed FDX headers extracted from a request.
@@ -40,7 +40,7 @@ pub fn extract_fdx_headers(headers: &HeaderMap) -> FdxHeaders {
             .and_then(|v| v.to_str().ok())
             .map(|s| s.to_string()),
         actor_type: headers
-            .get(&BANK8_OPEN_CA_API_ACTOR_TYPE)
+            .get(&OPENFIN8_CA_API_ACTOR_TYPE)
             .and_then(|v| v.to_str().ok())
             .map(|s| s.to_string()),
         idempotency_key: headers

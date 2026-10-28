@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
-//! Sentin8:Policy integration for Bank8:OpenCA.
+//! Sentin8:Policy integration for OpenFin8:CA.
 //! Thin re-export of the shared bridge (`sentin8::shield::runtime`) - the
 //! consolidated implementation every platform + vertical service uses.
 //! Nothing is service-specific here beyond the colon service_type.
@@ -17,7 +17,7 @@
 //! object required in addition to the handler consent check) is authored
 //! as a tenant policy set over the ReBAC substrate - never as a handler
 //! scope check. Raw access tokens/private keys stay secret-referenced
-//! (bank8-open-ca design §SEC); policy stores no credentials.
+//! (openfin8-ca design §SEC); policy stores no credentials.
 
 #[allow(unused_imports)]
 pub use sentin8::shield::runtime::{

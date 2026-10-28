@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
 //! FDX v6.5 completion - recurring payments (backed by Bank8:Payments
@@ -25,7 +25,7 @@ use crate::middleware;
 use crate::money_movement::proxy_payments_get;
 
 /// The fdx→payments proxy transport (CERTFREE-8V): the boot-built
-/// `bank8-open-ca-payments` certificate-presenting client, or a loud error -
+/// `openfin8-ca-payments` certificate-presenting client, or a loud error -
 /// the proxy NEVER degrades to an unauthenticated call.
 fn payments_http(state: &AppState) -> Result<reqwest::Client, axum::response::Response> {
     state

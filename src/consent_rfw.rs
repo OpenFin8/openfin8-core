@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
-//! Consent RFW endpoints - Bank8:OpenCA serves the FDX consent screen as
+//! Consent RFW endpoints - OpenFin8:CA serves the FDX consent screen as
 //! Remote Flutter Widget definitions to auth-ui's consent RFW host.
 //! These endpoints are proxied by Sentin8:Auth via `/v1/auth/consent/*`
 //! during the OAuth consent flow. See `sentin8-architecture-principles.md`
-//! §4.16 and `sentin8-bank8-open-ca-technical-design.md` §4.3b.
+//! §4.16 and `sentin8-openfin8-ca-technical-design.md` §4.3b.
 
 use axum::{
     extract::{Query, State},
@@ -164,7 +164,7 @@ pub async fn auth_consent_accounts(
     let env_id = a.env_id();
 
     // Fetch accounts from Bank8:Ledger over the certificate-presenting
-    // proxy transport (CERTFREE-8V - the `bank8-open-ca-ledger` workload
+    // proxy transport (CERTFREE-8V - the `openfin8-ca-ledger` workload
     // presents in the TLS handshake; no static token).
     let http = state.config.ledger_http().cloned().ok_or((
         StatusCode::BAD_GATEWAY,
@@ -327,7 +327,7 @@ pub async fn auth_consent_deny(
 }
 
 /// Map an FDX scope to a human-readable description and Material Icons code point.
-/// These descriptions are owned by Bank8:OpenCA (not the platform) - see §4.16.7.
+/// These descriptions are owned by OpenFin8:CA (not the platform) - see §4.16.7.
 fn fdx_scope_description(scope: &str) -> (String, &'static str) {
     if scope.contains(":fdx:recipient:read") {
         ("Read FDX recipient data".into(), "0xe615")

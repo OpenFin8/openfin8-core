@@ -1,6 +1,6 @@
 // SPDX-FileCopyrightText: Copyright Logically Magic Inc. <hello@logicallymagic.com>
 // SPDX-FileCopyrightText: Copyright Hamid Jahanzad <Hamid@Jahanzad.com>
-// SPDX-FileCopyrightText: Copyright Contributors to the Bank8:OpenCA
+// SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
 //! Story - CSDF minimization engine.
@@ -43,8 +43,8 @@ impl DataCluster {
 /// Returns an empty vec for unknown scopes.
 ///
 /// OBARCH-1: the scope vocabulary is profile-scoped - a US scope is
-/// `bank8:open-us:accountbasic:read`, a Canadian one
-/// `bank8:open-ca:accountbasic:read`. The cluster mapping is over
+/// `openfin8:us:accountbasic:read`, a Canadian one
+/// `openfin8:ca:accountbasic:read`. The cluster mapping is over
 /// the suffix, so one code path serves every jurisdiction; unknown
 /// prefixes (or non-scope strings) grant nothing (fail-closed).
 pub fn scope_to_clusters(profile: &crate::profile::Profile, scope: &str) -> Vec<DataCluster> {
