@@ -2962,9 +2962,14 @@ pub(crate) async fn emit_event(
     event_type: &str,
     payload: serde_json::Value,
 ) {
-    if let Err(e) =
-        sentin8::bus::outbox::insert_outbox_row_pool(pool, env_id, "openfin8-ca", event_type, &payload)
-            .await
+    if let Err(e) = sentin8::bus::outbox::insert_outbox_row_pool(
+        pool,
+        env_id,
+        "openfin8-ca",
+        event_type,
+        &payload,
+    )
+    .await
     {
         tracing::warn!(error = %e, event_type = %event_type, "open-banking: failed to emit outbox event");
     }
