@@ -6,7 +6,7 @@
 //! Typed response DTOs for the FDX-facing surfaces (OAPEC-9). Every body
 //! here documents the wire shape a handler emits; genuinely dynamic
 //! forwarded payloads (Ledger/Payments passthroughs) are documented by
-//! `FdxAccountsPassthrough` and never claimed as a fixed schema.
+//! `AccountsPassthrough` and never claimed as a fixed schema.
 
 use chrono::{DateTime, Utc};
 use serde::Serialize;
@@ -21,7 +21,7 @@ use uuid::Uuid;
 /// inventing fields the ledger owns.
 #[derive(Debug, Serialize, ToSchema)]
 #[serde(transparent)]
-pub struct FdxAccountsPassthrough(
+pub struct AccountsPassthrough(
     /// The forwarded provider document (dynamic, provider-controlled).
     pub serde_json::Value,
 );

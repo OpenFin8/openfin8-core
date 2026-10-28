@@ -64,7 +64,7 @@ pub struct CreateRecurringPaymentRequest {
     post,
     path = "/fdx/v6/recurring-payments",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -145,7 +145,7 @@ pub fn frequency_to_rrule(frequency: &str) -> Option<String> {
     get,
     path = "/fdx/v6/recurring-payments",
     responses(
-        (status = 200, description = "Forwarded scheduled-payments list", body = FdxAccountsPassthrough),
+        (status = 200, description = "Forwarded scheduled-payments list", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -166,7 +166,7 @@ pub async fn list_recurring_payments(
     get,
     path = "/fdx/v6/recurring-payments/{recurringPaymentId}",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -189,7 +189,7 @@ pub async fn get_recurring_payment(
     get,
     path = "/fdx/v6/recurring-payments/{recurringPaymentId}/payments",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),

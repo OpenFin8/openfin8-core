@@ -43,7 +43,7 @@ use crate::middleware;
     get,
     path = "/fdx/v6/payments/{paymentId}",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -66,7 +66,7 @@ pub async fn get_payment(
     get,
     path = "/fdx/v6/transfers/{transferId}",
     responses(
-        (status = 200, description = "Forwarded transfer detail", body = FdxAccountsPassthrough),
+        (status = 200, description = "Forwarded transfer detail", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -89,7 +89,7 @@ pub async fn get_transfer(
     patch,
     path = "/fdx/v6/transfers/{transferId}",
     responses(
-        (status = 200, description = "Forwarded transfer update", body = FdxAccountsPassthrough),
+        (status = 200, description = "Forwarded transfer update", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -127,7 +127,7 @@ pub async fn update_transfer(
     delete,
     path = "/fdx/v6/transfers/{transferId}",
     responses(
-        (status = 200, description = "Forwarded cancellation result", body = FdxAccountsPassthrough),
+        (status = 200, description = "Forwarded cancellation result", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -194,7 +194,7 @@ pub(crate) async fn proxy_payments_get(
     get,
     path = "/fdx/v6/payees",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -215,7 +215,7 @@ pub async fn list_payees(
     post,
     path = "/fdx/v6/payees",
     responses(
-        (status = 200, description = "Forwarded payee list", body = FdxAccountsPassthrough),
+        (status = 200, description = "Forwarded payee list", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -248,7 +248,7 @@ pub async fn create_payee(
     put,
     path = "/fdx/v6/payees/{payeeId}",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),

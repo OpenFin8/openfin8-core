@@ -47,7 +47,7 @@ use crate::middleware;
     get,
     path = "/fdx/v6/accounts/{id}/payment-networks/{paymentNetworkId}",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -58,7 +58,7 @@ pub async fn get_payment_network(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path((account_id, network_id)): Path<(Uuid, String)>,
-) -> Result<Json<FdxAccountsPassthrough>, Response> {
+) -> Result<Json<AccountsPassthrough>, Response> {
     let _a =
         middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Payments)).await?;
     let http = ledger_http(&state)?;
@@ -91,7 +91,7 @@ pub async fn get_payment_network(
                 .into_response(),
         );
     }
-    Ok(Json(FdxAccountsPassthrough(
+    Ok(Json(AccountsPassthrough(
         serde_json::json!({ "paymentNetworks": matched }),
     )))
 }

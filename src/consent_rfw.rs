@@ -47,7 +47,7 @@ pub struct ConsentUiQuery {
     get,
     path = "/v1/auth/consent/ui",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -147,7 +147,7 @@ pub async fn auth_consent_ui(
     get,
     path = "/v1/auth/consent/accounts",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -157,7 +157,7 @@ pub async fn auth_consent_ui(
 pub async fn auth_consent_accounts(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Result<Json<FdxAccountsPassthrough>, (StatusCode, String)> {
+) -> Result<Json<AccountsPassthrough>, (StatusCode, String)> {
     let a = auth::verify_token(&state.config, &headers).await?;
 
     // env_id is the sole tenant key.
@@ -242,7 +242,7 @@ pub async fn auth_consent_accounts(
         })
         .collect();
 
-    Ok(Json(FdxAccountsPassthrough(
+    Ok(Json(AccountsPassthrough(
         serde_json::json!({ "accounts": normalized }),
     )))
 }

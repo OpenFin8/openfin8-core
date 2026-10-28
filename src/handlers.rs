@@ -351,7 +351,7 @@ pub async fn revoke_consent(
     get,
     path = "/fdx/v6/accounts",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -361,7 +361,7 @@ pub async fn revoke_consent(
 pub async fn get_accounts(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Result<Json<FdxAccountsPassthrough>, Response> {
+) -> Result<Json<AccountsPassthrough>, Response> {
     let _a =
         middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Accounts)).await?;
     let http = ledger_http(&state)?;
@@ -383,7 +383,7 @@ pub async fn get_accounts(
     let filter = consent_filter_from_headers(&state, &headers).await;
     // Wrap in FDX response format, then apply CSDF minimization (§7).
     let wrapped = serde_json::json!({ "accounts": body });
-    Ok(Json(FdxAccountsPassthrough(minimize_response(
+    Ok(Json(AccountsPassthrough(minimize_response(
         &wrapped,
         &filter,
         &state.config.profile,
@@ -395,7 +395,7 @@ pub async fn get_accounts(
     get,
     path = "/fdx/v6/accounts/{id}",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -406,7 +406,7 @@ pub async fn get_account_detail(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(account_id): Path<Uuid>,
-) -> Result<Json<FdxAccountsPassthrough>, Response> {
+) -> Result<Json<AccountsPassthrough>, Response> {
     let _a =
         middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Accounts)).await?;
     let http = ledger_http(&state)?;
@@ -423,7 +423,7 @@ pub async fn get_account_detail(
         .await
         .map_err(|e| FdxErrorResponse::internal(format!("ledger decode: {e}")))?;
     let filter = consent_filter_from_headers(&state, &headers).await;
-    Ok(Json(FdxAccountsPassthrough(minimize_response(
+    Ok(Json(AccountsPassthrough(minimize_response(
         &body,
         &filter,
         &state.config.profile,
@@ -436,7 +436,7 @@ pub async fn get_account_detail(
     get,
     path = "/fdx/v6/accounts/{id}/transactions",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -447,7 +447,7 @@ pub async fn get_account_transactions(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(account_id): Path<Uuid>,
-) -> Result<Json<FdxAccountsPassthrough>, Response> {
+) -> Result<Json<AccountsPassthrough>, Response> {
     let _a =
         middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Transactions)).await?;
     let http = ledger_http(&state)?;
@@ -464,7 +464,7 @@ pub async fn get_account_transactions(
         .await
         .map_err(|e| FdxErrorResponse::internal(format!("ledger decode: {e}")))?;
     let filter = consent_filter_from_headers(&state, &headers).await;
-    Ok(Json(FdxAccountsPassthrough(minimize_response(
+    Ok(Json(AccountsPassthrough(minimize_response(
         &body,
         &filter,
         &state.config.profile,
@@ -660,7 +660,7 @@ pub async fn list_recipient_providers(
     get,
     path = "/fdx/v6/accounts/{id}/statements",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -671,7 +671,7 @@ pub async fn list_account_statements(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(account_id): Path<Uuid>,
-) -> Result<Json<FdxAccountsPassthrough>, Response> {
+) -> Result<Json<AccountsPassthrough>, Response> {
     let _a =
         middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Statements)).await?;
     let http = ledger_http(&state)?;
@@ -689,7 +689,7 @@ pub async fn list_account_statements(
         .map_err(|e| FdxErrorResponse::internal(format!("ledger decode: {e}")))?;
     let filter = consent_filter_from_headers(&state, &headers).await;
     let wrapped = serde_json::json!({ "statements": body });
-    Ok(Json(FdxAccountsPassthrough(minimize_response(
+    Ok(Json(AccountsPassthrough(minimize_response(
         &wrapped,
         &filter,
         &state.config.profile,
@@ -701,7 +701,7 @@ pub async fn list_account_statements(
     get,
     path = "/fdx/v6/accounts/{id}/payment-networks",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -712,7 +712,7 @@ pub async fn get_payment_networks(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(account_id): Path<Uuid>,
-) -> Result<Json<FdxAccountsPassthrough>, Response> {
+) -> Result<Json<AccountsPassthrough>, Response> {
     let _a =
         middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Accounts)).await?;
     let http = ledger_http(&state)?;
@@ -730,7 +730,7 @@ pub async fn get_payment_networks(
         .map_err(|e| FdxErrorResponse::internal(format!("ledger decode: {e}")))?;
     let filter = consent_filter_from_headers(&state, &headers).await;
     let wrapped = serde_json::json!({ "payment_networks": body });
-    Ok(Json(FdxAccountsPassthrough(minimize_response(
+    Ok(Json(AccountsPassthrough(minimize_response(
         &wrapped,
         &filter,
         &state.config.profile,
@@ -742,7 +742,7 @@ pub async fn get_payment_networks(
     get,
     path = "/fdx/v6/customers",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -752,7 +752,7 @@ pub async fn get_payment_networks(
 pub async fn list_customers(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Result<Json<FdxAccountsPassthrough>, Response> {
+) -> Result<Json<AccountsPassthrough>, Response> {
     let _a =
         middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Customers)).await?;
     let http = ledger_http(&state)?;
@@ -767,7 +767,7 @@ pub async fn list_customers(
         .map_err(|e| FdxErrorResponse::internal(format!("ledger decode: {e}")))?;
     let filter = consent_filter_from_headers(&state, &headers).await;
     let wrapped = serde_json::json!({ "customers": body });
-    Ok(Json(FdxAccountsPassthrough(minimize_response(
+    Ok(Json(AccountsPassthrough(minimize_response(
         &wrapped,
         &filter,
         &state.config.profile,
@@ -779,7 +779,7 @@ pub async fn list_customers(
     get,
     path = "/fdx/v6/customers/current",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -789,7 +789,7 @@ pub async fn list_customers(
 pub async fn get_current_customer(
     State(state): State<AppState>,
     headers: HeaderMap,
-) -> Result<Json<FdxAccountsPassthrough>, Response> {
+) -> Result<Json<AccountsPassthrough>, Response> {
     let a =
         middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Customers)).await?;
     let http = ledger_http(&state)?;
@@ -808,7 +808,7 @@ pub async fn get_current_customer(
         .await
         .map_err(|e| FdxErrorResponse::internal(format!("ledger decode: {e}")))?;
     let filter = consent_filter_from_headers(&state, &headers).await;
-    Ok(Json(FdxAccountsPassthrough(minimize_response(
+    Ok(Json(AccountsPassthrough(minimize_response(
         &body,
         &filter,
         &state.config.profile,
@@ -829,7 +829,7 @@ pub struct CreateTransferRequest {
     post,
     path = "/fdx/v6/transfers",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -840,7 +840,7 @@ pub async fn create_transfer(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(req): Json<CreateTransferRequest>,
-) -> Result<Json<FdxAccountsPassthrough>, Response> {
+) -> Result<Json<AccountsPassthrough>, Response> {
     let a =
         middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Transfers)).await?;
     let http = payments_http(&state)?;
@@ -867,7 +867,7 @@ pub async fn create_transfer(
         body.clone(),
     )
     .await;
-    Ok(Json(FdxAccountsPassthrough(body)))
+    Ok(Json(AccountsPassthrough(body)))
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
@@ -883,7 +883,7 @@ pub struct CreatePaymentRequest {
     post,
     path = "/fdx/v6/payments",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -894,7 +894,7 @@ pub async fn create_payment(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(req): Json<CreatePaymentRequest>,
-) -> Result<Json<FdxAccountsPassthrough>, Response> {
+) -> Result<Json<AccountsPassthrough>, Response> {
     let a = middleware::provider_authz(&state, &headers, Some(csdf::DataCluster::Payments)).await?;
     let http = payments_http(&state)?;
     let payload = serde_json::json!({
@@ -919,7 +919,7 @@ pub async fn create_payment(
         body.clone(),
     )
     .await;
-    Ok(Json(FdxAccountsPassthrough(body)))
+    Ok(Json(AccountsPassthrough(body)))
 }
 
 /// `GET /fdx/v6/capability` - provider capability metadata.
@@ -1928,7 +1928,7 @@ pub struct ListRecipientAccountsQuery {
     get,
     path = "/v1/recipient/accounts",
     responses(
-        (status = 200, description = "OK", body = FdxAccountsPassthrough),
+        (status = 200, description = "OK", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -1939,7 +1939,7 @@ pub async fn list_recipient_accounts(
     State(state): State<AppState>,
     headers: HeaderMap,
     Query(q): Query<ListRecipientAccountsQuery>,
-) -> Result<Json<FdxAccountsPassthrough>, (StatusCode, String)> {
+) -> Result<Json<AccountsPassthrough>, (StatusCode, String)> {
     let a = auth::verify_token(&state.config, &headers).await?;
     crate::policy::require(
         &state.policy,
@@ -1988,7 +1988,7 @@ pub async fn list_recipient_accounts(
     let consent_row = match consent_row {
         Some(r) => r,
         None => {
-            return Ok(Json(FdxAccountsPassthrough(
+            return Ok(Json(AccountsPassthrough(
                 serde_json::json!({ "accounts": [] }),
             )))
         }
@@ -2109,7 +2109,7 @@ pub async fn list_recipient_accounts(
         raw
     };
 
-    Ok(Json(FdxAccountsPassthrough(
+    Ok(Json(AccountsPassthrough(
         serde_json::json!({ "accounts": accounts }),
     )))
 }
@@ -2119,7 +2119,7 @@ pub async fn list_recipient_accounts(
     get,
     path = "/v1/recipient/accounts/{id}/transactions",
     responses(
-        (status = 200, description = "Forwarded ledger transactions (CSDF-minimized)", body = FdxAccountsPassthrough),
+        (status = 200, description = "Forwarded ledger transactions (CSDF-minimized)", body = AccountsPassthrough),
         (status = 401, description = "Not authenticated"),
         (status = 403, description = "Missing the FDX consent/scope gate"),
     ),
@@ -2130,7 +2130,7 @@ pub async fn get_recipient_account_transactions(
     State(state): State<AppState>,
     headers: HeaderMap,
     Path(account_id): Path<Uuid>,
-) -> Result<Json<FdxAccountsPassthrough>, (StatusCode, String)> {
+) -> Result<Json<AccountsPassthrough>, (StatusCode, String)> {
     let _a = auth::verify_token(&state.config, &headers).await?;
     crate::policy::require(
         &state.policy,
@@ -2152,7 +2152,7 @@ pub async fn get_recipient_account_transactions(
         .json()
         .await
         .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
-    Ok(Json(FdxAccountsPassthrough(body)))
+    Ok(Json(AccountsPassthrough(body)))
 }
 
 /// `GET /v1/recipient/notifications` - notification feed for the recipient.
