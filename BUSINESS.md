@@ -2,7 +2,7 @@
 
 > Audience: product owners, business analysts, and anyone evaluating what
 > openfin8-core **does for the business**. For architecture read `README.md`;
-> for wire-level detail read `DESIGN.md` (OBARCH-1).
+> for wire-level detail read `DESIGN.md`.
 
 ## 1. Business Purpose
 

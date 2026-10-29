@@ -65,20 +65,11 @@ graph TD
     CORE -->|"money movement initiation"| PAY
 ```
 
-Read [`DESIGN.md`](https://github.com/OpenFin8/openfin8-core/blob/main/DESIGN.md) (OBARCH-1) for the full design: the
+Read [`DESIGN.md`](https://github.com/OpenFin8/openfin8-core/blob/main/DESIGN.md) for the full design: the
 extraction inventory from OpenFin8:CA, the four trait signatures, the
 generalized data model, CSDF vocabulary-as-profile-data, version
 and jurisdiction configuration, and the spec-publication policy
-mechanism (OBARCH-2).
-
-## Status
-
-**Skeleton** - the trait contract is defined (see
-[`src/traits.rs`](https://github.com/OpenFin8/openfin8-core/blob/main/src/traits.rs)); the module bodies (consent,
-recipient, csdf, notify, admin, contract, sql, server) land with
-the OBARCH-1 implementation. The per-country adapters
-(`openfin8-us`, `openfin8-ca`, `openfin8-uk`) carry their own
-design documents and follow the same status discipline.
+mechanism.
 
 ## Development
 

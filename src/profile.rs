@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:Core
 // SPDX-License-Identifier: Apache-2.0
 
-//! The runtime jurisdiction profile (OBARCH-1 §2, OBARCH-4).
+//! The runtime jurisdiction profile§2,).
 //!
 //! Every identity string the shared implementation needs at runtime -
 //! env-var prefix, event family, Shield targets, scope vocabulary, wire
@@ -44,7 +44,7 @@ pub struct Profile {
     /// "openfin8:ca" - `format!("{prefix}:accountbasic:read")` etc.
     pub scope_prefix: &'static str,
     /// The FDX version this deployment serves ("6.5") - version-
-    /// configurable per environment (OBARCH-2/3).
+    /// configurable per environment/3).
     pub fdx_version: String,
 }
 
@@ -102,7 +102,7 @@ impl Profile {
         self.stream_family
     }
 
-    /// Build the Canadian profile (FDX/CDX - OBARCH-4).
+    /// Build the Canadian profile (FDX/CDX -).
     pub fn canada() -> Self {
         Self {
             jurisdiction: "ca",
@@ -117,7 +117,7 @@ impl Profile {
         }
     }
 
-    /// Build the US profile (FDX - OBARCH-3).
+    /// Build the US profile (FDX -).
     pub fn united_states() -> Self {
         Self {
             jurisdiction: "us",
@@ -133,7 +133,7 @@ impl Profile {
     }
 
     /// Build the European profile (Berlin Group openFinance V2 -
-    /// OBARCH-7). The XS2A wire is adapter-owned (a different wire
+    ///). The XS2A wire is adapter-owned (a different wire
     /// family from FDX); this profile carries the jurisdiction
     /// identity strings the shared machinery needs: schema
     /// `openfin8_eu`, scopes `openfin8:eu:*`, event family
@@ -154,7 +154,7 @@ impl Profile {
         }
     }
 
-    /// Build the UK profile (OBL Read/Write API - OBARCH-5). The OB
+    /// Build the UK profile (OBL Read/Write API -). The OB
     /// wire is adapter-owned (the first non-FDX wire family): this
     /// profile carries the jurisdiction identity strings the shared
     /// machinery needs - schema `openfin8_uk`, scopes `openfin8:uk:*`,

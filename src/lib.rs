@@ -8,14 +8,14 @@
 //! The jurisdiction-agnostic open-finance kernel embedded by every
 //! OpenFin8 adapter (`openfin8-us`, `openfin8-ca`,
 //! `openfin8-uk`, and the adapters to follow). See `DESIGN.md`
-//! (OBARCH-1) for the full design.
+//!) for the full design.
 //!
 //! This is a LIBRARY crate: no process runs on it. Each adapter
 //! binary embeds it, supplies its jurisdiction [`profile::Profile`]
 //! at boot (`Profile::canada()` / `::united_states()`), its
 //! registration data, and its published-spec policy - and the SAME
 //! code serves both markets. The US and Canadian adapters differ in
-//! data (profile + registration), not in code (OBARCH-4: no fork).
+//! data (profile + registration), not in code: no fork).
 //!
 //! ## Layout
 //!

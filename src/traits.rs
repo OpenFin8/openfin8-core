@@ -3,14 +3,11 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:Core
 // SPDX-License-Identifier: Apache-2.0
 
-//! The adapter contract (OBARCH-1 §2): every country adapter
+//! The adapter contract (DESIGN.md §2): every country adapter
 //! implements these four traits; core supplies the axum router, the
 //! middleware chokepoints, the consumers, and the workers that call
-//! through them.
-//!
-//! Skeleton - the full trait bodies, `CoreState`, and the
-//! shared routers land with the OBARCH-1 implementation. The
-//! signatures here are the design contract from DESIGN.md §2.
+//! through them. The signatures here are the design contract from
+//! DESIGN.md §2.
 
 /// The wire-flavor descriptor - what an adapter IS.
 #[allow(unused_variables)]
@@ -34,7 +31,7 @@ pub trait OpenBankingProfile: Send + Sync + 'static {
     /// Envelope codec for this standard's response wrapping.
     fn envelope(&self) -> EnvelopeStyle;
     /// Spec publication policy - what docs/openapi.json may carry
-    /// (OBARCH-2: US/CA must exclude the standard surface).
+    ///: US/CA must exclude the standard surface).
     fn spec_publication(&self) -> SpecPublicationPolicy;
 }
 
@@ -74,7 +71,7 @@ pub enum SpecPublicationPolicy {
 }
 
 /// One data-cluster vocabulary entry (profile data, not an enum -
-/// OBARCH-1 §4: UK permissions and FDX clusters are vocabularies
+///§4: UK permissions and FDX clusters are vocabularies
 /// over the same filter engine).
 #[derive(Debug, Clone)]
 pub struct DataClusterDef {
@@ -114,12 +111,9 @@ pub enum EnvelopeStyle {
 }
 
 /// The OAuth ceremony the adapter's AS integration speaks
-/// (OBARCH-1 §2). Implemented against `sentin8::auth::client`;
+/// (DESIGN.md §2). Implemented against `sentin8::auth::client`;
 /// Auth keeps its own profile flags per jurisdiction (DPoP vs
 /// hybrid+JWS vs CIBA).
-///
-/// Skeleton - the async trait bodies and `CeremonyCtx` land with
-/// the OBARCH-1 implementation.
 #[allow(unused_variables)]
 pub trait ConsentCeremony: Send + Sync + 'static {
     /// Register/lookup the recipient's OAuth client at the
@@ -137,7 +131,7 @@ pub trait ConsentCeremony: Send + Sync + 'static {
     fn refresh(&self) -> DelegatedTokens;
 }
 
-/// Marker types for the ceremony skeleton - see DESIGN.md §2 for
+/// Marker types for the ceremony surfaces - see DESIGN.md §2 for
 /// the full shapes (they carry secret references, never plaintext
 /// tokens).
 pub struct ClientRegistration;

@@ -165,7 +165,7 @@ pub fn routes(
     state: crate::handlers::AppState,
 ) -> axum::Router<crate::handlers::AppState> {
     use axum::routing::{delete, put};
-    // OBARCH-3/4: the provider mount prefix is version-driven
+    ///4: the provider mount prefix is version-driven
     // (BANK8_OPEN_{XX}_VERSION -> "/fdx/v{major}"), replacing the six
     // hardcoded `v6` strings of the fdx design.
     let pfx = state.config.profile.provider_prefix();

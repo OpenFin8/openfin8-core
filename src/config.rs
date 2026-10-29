@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:Core
 // SPDX-License-Identifier: Apache-2.0
 
-//! Open-banking service configuration (OBARCH-1): the shared
+//! Open-banking service configuration): the shared
 //! kernel's config, jurisdiction-scoped through the runtime
 //! `Profile` (see `profile.rs`). The adapter binary selects the
 //! profile at boot; every identity string - env prefix, stream
@@ -57,7 +57,7 @@ pub struct Fdx8Config {
     /// Cloning is cheap (the caches live behind an `Arc`).
     pub sentin8_auth_client: AuthClient,
     /// The FDX version this deployment serves (e.g. "6.5") -
-    /// OBARCH-3/4: drives the provider route prefix (`/fdx/v{major}`),
+    ////4: drives the provider route prefix (`/fdx/v{major}`),
     /// the capability + certification-metrics announcements, the admin
     /// settings selector, and the env-init provider-profile seed.
     pub fdx_version: String,

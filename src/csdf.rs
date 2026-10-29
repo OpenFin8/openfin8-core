@@ -42,7 +42,7 @@ impl DataCluster {
 /// Map an OAuth scope string to one or more data clusters.
 /// Returns an empty vec for unknown scopes.
 ///
-/// OBARCH-1: the scope vocabulary is profile-scoped - a US scope is
+///: the scope vocabulary is profile-scoped - a US scope is
 /// `openfin8:us:accountbasic:read`, a Canadian one
 /// `openfin8:ca:accountbasic:read`. The cluster mapping is over
 /// the suffix, so one code path serves every jurisdiction; unknown
@@ -90,7 +90,7 @@ impl CsdfFilter {
     }
 
     /// Compute the set of data clusters allowed by the consent scopes.
-    /// OBARCH-1: the scope vocabulary is profile-scoped - the caller
+    ///: the scope vocabulary is profile-scoped - the caller
     /// (the consent middleware) supplies the jurisdiction profile.
     pub fn allowed_clusters(&self, profile: &crate::profile::Profile) -> Vec<DataCluster> {
         let mut out = vec![];

@@ -33,7 +33,7 @@ use crate::validation::validate_fdx_request;
 #[allow(dead_code)]
 pub fn route_cluster(method: &str, path: &str) -> Option<(String, Option<csdf::DataCluster>)> {
     let _ = method;
-    // Version-parameterized prefix (OBARCH-3/4): "/fdx/v{major}" from
+    // Version-parameterized prefix/4): "/fdx/v{major}" from
     // OPENFIN8_CA_VERSION - the shape matches any major segment.
     let major = std::env::var("OPENFIN8_CA_VERSION")
         .unwrap_or_else(|_| "6.5".into())
@@ -94,7 +94,7 @@ pub async fn audit_data_call(pool: &sqlx::PgPool, env_id: Uuid, actor: &str, rou
 }
 
 /// Map a route to the OAuth scope that grants its data cluster (design §6.1).
-/// OBARCH-1: scope strings are profile-scoped (`openfin8:us:*` vs
+///: scope strings are profile-scoped (`openfin8:us:*` vs
 /// `openfin8:ca:*`) - the caller supplies the jurisdiction profile.
 fn scope_for_cluster(profile: &crate::profile::Profile, cluster: csdf::DataCluster) -> String {
     match cluster {
