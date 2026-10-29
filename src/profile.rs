@@ -153,4 +153,26 @@ impl Profile {
             fdx_version: env::var("OPENFIN8_EU_VERSION").unwrap_or_else(|_| "2.4".into()),
         }
     }
+
+    /// Build the UK profile (OBL Read/Write API - OBARCH-5). The OB
+    /// wire is adapter-owned (the first non-FDX wire family): this
+    /// profile carries the jurisdiction identity strings the shared
+    /// machinery needs - schema `openfin8_uk`, scopes `openfin8:uk:*`,
+    /// event family `openfin8-uk`. The `fdx_version` field carries the
+    /// served OB version (the adapter's own `OPENFIN8_UK_VERSION`,
+    /// default `3.1.11`; `4.0.1` configurable) - the OB path shape is
+    /// `v{maj}.{min}`, unlike FDX's `v{major}` (UK DESIGN §2).
+    pub fn united_kingdom() -> Self {
+        Self {
+            jurisdiction: "uk",
+            service_type: "openfin8:uk",
+            binary: "openfin8-uk",
+            env_prefix: "OPENFIN8_UK",
+            family: "openfin8-uk",
+            stream_family: "openfin8-uk",
+            schema: "openfin8_uk",
+            scope_prefix: "openfin8:uk",
+            fdx_version: env::var("OPENFIN8_UK_VERSION").unwrap_or_else(|_| "3.1.11".into()),
+        }
+    }
 }
