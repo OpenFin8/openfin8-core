@@ -34,3 +34,4 @@ tag: ## Print this lib's pin tag (RS §7.1: openfin8-vX)
 
 clean: ## cargo clean
 	@$(CARGO) clean
+	@rm -rf .run .run/logs .tmp
