@@ -114,7 +114,7 @@ async fn run_grantseed(
 
 /// Process messages from a single Bus SSE connection until it drops.
 /// `handle` is the family-specific dispatcher (ACK after every processed
-/// message - the BUSACK-1 contract).
+/// message - the contract).
 async fn sse_loop(
     family: &'static str,
     group: &'static str,
@@ -174,7 +174,7 @@ async fn sse_loop(
 }
 
 /// Startup backfill: catch events emitted before this consumer started
-/// (e.g. after a redeploy). VDC-9 (design/sentin8-vertical-data-plane-
+/// (e.g. after a redeploy). (design/sentin8-vertical-data-plane-
 /// contract.md §VDC.5/§VDC.8): the former cross-database scan of the
 /// platform `sys_services` table never worked (those tables do not exist in
 /// the bank8 database) - the sanctioned discovery surface is the snapshot
@@ -204,7 +204,7 @@ async fn backfill_enabled_envs(pool: &PgPool, profile: &crate::profile::Profile)
 
 /// Ensure a provider profile exists for the given env. Idempotent.
 ///
-/// VDC-9 (design/sentin8-vertical-data-plane-contract.md §VDC.5): the
+/// (design/sentin8-vertical-data-plane-contract.md §VDC.5): the
 /// tenant identity snapshot (env slug, org domain, org display name,
 /// auth domain) is obtained from Sys's tenant-snapshot API
 /// (`GET /v1/tenants/{env_id}`, M2M `sentin8:sys:tenants:read`) - the
@@ -315,7 +315,7 @@ async fn handle_grant_message(
         return;
     }
 
-    // VDC-2 consumer-side defense-in-depth: the event's first colon
+    // consumer-side defense-in-depth: the event's first colon
     // segment must match the recorded producer vertical (`sentin8`).
     if let Err(reason) = sentin8::bus::client::BusClient::require_publisher(msg) {
         tracing::warn!(reason = %reason, "fdx: untrusted publisher - skipping grant seed");
@@ -528,7 +528,7 @@ async fn handle_envinit_message(
         None => return,
     };
 
-    // VDC-2 consumer-side defense-in-depth: the event's first colon
+    // consumer-side defense-in-depth: the event's first colon
     // segment must match the recorded producer vertical (`sentin8`) -
     // Bus's produce-side ownership gate is the structural control; this
     // verifies the message Bus delivered before seeding tenant state.
@@ -585,7 +585,7 @@ async fn seed_env_policy_sets(
     Ok(())
 }
 
-// ── Sys tenant-snapshot API client (VDC-4/VDC-9) ──────────────────────────
+// ── Sys tenant-snapshot API client (/) ──────────────────────────
 
 /// The tenant identity fields the FDX provider-profile flow derives
 /// issuer/JWKS/callback hostnames from (Sys `GET /v1/tenants/{env_id}`

@@ -7,7 +7,7 @@
 //!
 //! The FDX provider-catalog URL derivation needs the provider env's
 //! slug + org domain. The former cross-database `sentin8.sys_environments`
-//! joins never existed in the vertical's own database (VDC-2) and always
+//! joins never existed in the vertical's own database and always
 //! returned empty. The sanctioned on-demand read is Sys's tenant-snapshot
 //! API (`GET /v1/tenants/{env_id}`) via the cert-presenting
 //! `openfin8-ca-sys` workload (CERTFREE-4V - no M2M token; the scope

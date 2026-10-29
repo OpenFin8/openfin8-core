@@ -77,7 +77,7 @@ mechanism.
 make help     # the available targets
 make build    # cargo build
 make test     # cargo test
-make lint     # cargo fmt -- --check
+make lint     # cargo fmt -check
 make tag      # print this lib's pin tag (bank8-vX)
 ```
 

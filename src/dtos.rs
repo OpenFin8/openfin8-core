@@ -3,7 +3,7 @@
 // SPDX-FileCopyrightText: Copyright Contributors to the OpenFin8:CA
 // SPDX-License-Identifier: Apache-2.0
 
-//! Typed response DTOs for the FDX-facing surfaces (OAPEC-9). Every body
+//! Typed response DTOs for the FDX-facing surfaces . Every body
 //! here documents the wire shape a handler emits; genuinely dynamic
 //! forwarded payloads (Ledger/Payments passthroughs) are documented by
 //! `AccountsPassthrough` and never claimed as a fixed schema.
@@ -13,7 +13,7 @@ use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-/// FDX account/customer/statement passthrough envelope (OAPEC-9 honest
+/// FDX account/customer/statement passthrough envelope (honest
 /// freeform): the forwarded provider document (Ledger/Payments payload,
 /// CSDF-minimized) is provider-controlled, so the response body IS the
 /// forwarded document itself - serialized transparently (wire-identical),
@@ -141,7 +141,7 @@ pub struct CertificationMetricCounters {
     pub data_calls: i64,
 }
 
-/// Consent-start redirect (OAPEC-9 typed body).
+/// Consent-start redirect (typed body).
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ConsentStartResponse {
     /// The started consent id.
@@ -274,7 +274,7 @@ pub struct AdminAuditRow {
     pub timestamp: DateTime<Utc>,
 }
 
-/// Liveness/build identity (OAPEC-9 typed body).
+/// Liveness/build identity (typed body).
 #[derive(Debug, Serialize, ToSchema)]
 pub struct ServiceHealth {
     /// Always `ok` when serving.
