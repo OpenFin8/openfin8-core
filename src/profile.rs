@@ -131,4 +131,26 @@ impl Profile {
             fdx_version: env::var("OPENFIN8_US_VERSION").unwrap_or_else(|_| "6.5".into()),
         }
     }
+
+    /// Build the European profile (Berlin Group openFinance V2 -
+    /// OBARCH-7). The XS2A wire is adapter-owned (a different wire
+    /// family from FDX); this profile carries the jurisdiction
+    /// identity strings the shared machinery needs: schema
+    /// `openfin8_eu`, scopes `openfin8:eu:*`, event family
+    /// `openfin8-eu`. The `fdx_version` field is unused on the XS2A
+    /// path (the served openFinance version is the adapter's own
+    /// `OPENFIN8_EU_VERSION`); it stays at the neutral default.
+    pub fn european_union() -> Self {
+        Self {
+            jurisdiction: "eu",
+            service_type: "openfin8:eu",
+            binary: "openfin8-eu",
+            env_prefix: "OPENFIN8_EU",
+            family: "openfin8-eu",
+            stream_family: "openfin8-eu",
+            schema: "openfin8_eu",
+            scope_prefix: "openfin8:eu",
+            fdx_version: env::var("OPENFIN8_EU_VERSION").unwrap_or_else(|_| "2.4".into()),
+        }
+    }
 }
