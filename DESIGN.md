@@ -14,7 +14,7 @@ CSDF data-minimization engine, the notification delivery worker, the
 admin/RFW page framework, the audit discipline, and the wire-agnostic
 service traits that country adapters implement. It is a **library
 crate, not a service binary** - no process runs on it; each
-`bank8-open-*` binary embeds it and supplies its wire surface, its
+`openfin8-*` binary embeds it and supplies its wire surface, its
 contract table, and its registration data.
 
 **Where it lives.** In the `bank8-sdk` repository as

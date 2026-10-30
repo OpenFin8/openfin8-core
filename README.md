@@ -14,7 +14,7 @@ per-country adapters implement.
 ## Summary
 
 `openfin8-core` is a **library crate** - no process runs on it.
-Every `bank8-open-*` adapter (`openfin8-us`, `openfin8-ca`,
+Every `openfin8-*` adapter (`openfin8-us`, `openfin8-ca`,
 `openfin8-uk`, and the adapters to follow) embeds it and supplies
 its wire surface, its contract table, and its registration data
 through four traits: `OpenBankingProfile` (the wire descriptor),
