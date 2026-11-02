@@ -27,25 +27,25 @@ embedding service owns boot; (c) adapters already depend on the SDK
 git pin, so the version pin rides the existing `bank8-v*` tags with
 no new supply chain.
 
-**What moves here from `bank8-fdx` (the extraction inventory).**
-~70% of the current service is standard-agnostic and moves as-is:
+**What the core owns (~70% of every adapter is standard-agnostic and
+lives here):**
 
-| Current module (bank8-fdx) | Disposition in core | Notes |
+| Core module | Responsibility | Notes |
 |---|---|---|
-| `consent_records.rs`, `common.rs` (grant-ledger halves) | `core::consent` | grant ledger, revocation records, lifecycle windows - **standard-agnostic today** |
-| `recipients`/`recipient_consents` plumbing in `handlers.rs` | `core::recipient` | two-ledger model, DCR cache pattern, token-reference custody |
-| `csdf.rs` | `core::csdf` | cluster vocabulary + scope mapping table moves to adapter config (§4); filter engine stays |
-| `event_notifications.rs` (worker) | `core::notify` | HMAC delivery worker - envelope shape parameterized by adapter |
-| `admin_ui.rs` pages (overview/consents/recipients/settings) | `core::admin` | page constructors shared; jurisdiction-specific cards supplied by adapter |
-| `audit_events` helpers | `core::audit` | `data_call*` discipline unchanged |
-| `flow.rs` step profile | `core::flow` | proxy-back step contract unchanged |
-| `policy.rs`, `errors.rs`, `headers.rs`, `tokens.rs` | `core::runtime` | Shield/verify/error plumbing shared |
-| `validation.rs`, `middleware.rs` route/contract halves | `core::contract` **trait** | route table + FAPI headers become adapter-supplied data |
-| `/fdx/v6/*` handlers (`handlers.rs` proxy halves, `money_movement.rs`, `pip.rs`, `recurring.rs`, `payment_networks.rs`, `statement_download.rs`, `tax.rs`, `operations.rs`) | **stay in adapters** | these are the FDX wire surface |
-| `consent_rfw.rs` hosted consent screens | `core::rfw` with adapter screen params | scope wording + account picker are standard-flavored |
-| SQL (15 domain tables) | **moves to core SQL**, parameterized schema name | §5 |
+| `core::consent` | grant ledger, revocation records, lifecycle windows | standard-agnostic |
+| `core::recipient` | two-ledger model, DCR cache pattern, token-reference custody | |
+| `core::csdf` | cluster vocabulary + scope mapping (adapter config, §4); filter engine | |
+| `core::notify` | HMAC delivery worker - envelope shape parameterized by adapter | |
+| `core::admin` | shared admin page constructors; jurisdiction-specific cards supplied by adapter | |
+| `core::audit` | `data_call*` discipline | |
+| `core::flow` | proxy-back step contract | |
+| `core::runtime` | Shield/verify/error plumbing | |
+| `core::contract` **trait** | route table + FAPI headers as adapter-supplied data | |
+| adapter crates | the `/fdx/v6/*` FDX wire handlers (money movement, PIP, recurring, payment networks, statement download, tax, operations) | jurisdiction surface |
+| `core::rfw` | hosted consent screens with adapter screen params | scope wording is jurisdiction-flavored |
+| SQL (15 domain tables) | core SQL with a parameterized schema name | §5 |
 
-**The two-ledger model survives unchanged** (fdx DESIGN §1): the
+**The two-ledger model is normative**: the
 provider's grant ledger and the recipient's consent registry are
 in separate tenants, no cross-tenant SQL ever. What changes is only
 which wire the ceremony speaks - FDX, OBIE, or CDX - and that is
@@ -293,11 +293,7 @@ by construction.
 - **Testing**: core units (CSDF filter per vocabulary, consent state
   machines, route-contract matching) + adapter integration tests
   (ceremony against scratch Auth, route table validation) + the
-  e2e recipient journey per country in `bank8-e2e`.
-- **Migration**: `bank8-fdx` becomes `openfin8-us` in-place
-  (service_type, schema rename `fdx` → `open_us` with data
-  migration, event family rename). No parallel-run period - the
-  rename ships as one atomic vertical release.
+  e2e recipient journey per country in the vertical's e2e suite.
 
 ## 9. Open Questions
 
