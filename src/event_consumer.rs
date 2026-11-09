@@ -83,31 +83,53 @@ async fn run_envinit(
 }
 
 /// Run the auth-family consumer loop: the provider grant seed.
+///
+/// The grant events land on the TENANT env streams (`bus:{env}:auth` -
+/// auth's outbox rows carry the authorizing tenant env), while this
+/// service's M2M token env is the SYSTEM env - so the loop DECLARES the
+/// tenant env per connection (the consume env contract): one SSE
+/// consumer per known provider env, re-derived whenever the known-env
+/// set changes (the env-init path writes `provider_profiles` rows - a
+/// fresh tenant appears there on its enable event).
 async fn run_grantseed(
     pool: PgPool,
     bus_client: sentin8::bus::client::BusClient,
     profile_auth: crate::profile::Profile,
 ) {
     tracing::info!("fdx: bus grant-seed consumer started (consumer_group={AUTH_CONSUMER_GROUP})");
+    // One SSE task per known provider env; the task set refreshes when
+    // the known-env list changes (a new tenant enables the service).
+    let mut served: std::collections::HashSet<uuid::Uuid> = Default::default();
     loop {
-        match bus_client.sse_consume("auth", AUTH_CONSUMER_GROUP).await {
-            Ok(resp) => {
-                tracing::info!("fdx: bus SSE connected to stream family 'auth'");
-                sse_loop(
-                    "auth",
-                    AUTH_CONSUMER_GROUP,
-                    &pool,
-                    &bus_client,
-                    resp,
-                    &profile_auth,
-                )
-                .await;
-                tracing::info!("fdx: bus SSE disconnected (auth) - reconnecting");
-            }
-            Err(e) => {
-                tracing::warn!(error = %e, "fdx: bus SSE consume failed (auth) - reconnecting");
-            }
+        let envs: Vec<uuid::Uuid> = sqlx::query_scalar(
+            r#"SELECT DISTINCT env_id FROM provider_profiles"#,
+        )
+        .fetch_all(&pool)
+        .await
+        .unwrap_or_default();
+        let envs: std::collections::HashSet<uuid::Uuid> = envs.into_iter().collect();
+        let new_envs: Vec<uuid::Uuid> = envs.difference(&served).copied().collect();
+        for env in new_envs {
+            let bus = bus_client.clone();
+            let pool = pool.clone();
+            let profile = profile_auth.clone();
+            tokio::spawn(async move {
+                loop {
+                    match bus.sse_consume_env("auth", AUTH_CONSUMER_GROUP, Some(env)).await {
+                        Ok(resp) => {
+                            tracing::info!(%env, "fdx: bus SSE connected to stream family 'auth'");
+                            sse_loop("auth", AUTH_CONSUMER_GROUP, &pool, &bus, resp, &profile).await;
+                            tracing::info!(%env, "fdx: bus SSE disconnected (auth) - reconnecting");
+                        }
+                        Err(e) => {
+                            tracing::warn!(%env, error = %e, "fdx: bus SSE consume failed (auth) - reconnecting");
+                        }
+                    }
+                    tokio::time::sleep(RECONNECT_DELAY).await;
+                }
+            });
         }
+        served = envs.clone();
         tokio::time::sleep(RECONNECT_DELAY).await;
     }
 }
