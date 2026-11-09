@@ -380,6 +380,12 @@ pub async fn get_accounts(
         .json()
         .await
         .map_err(|e| FdxErrorResponse::internal(format!("ledger decode: {e}")))?;
+    // The ledger's wire is its own snake_case document (account_type,
+    // currentBalance, no account number - the ledger holds no PAN); the
+    // FDX wire contract carries accountType/accountNumberDisplay (the
+    // masked display form). Normalize BEFORE the CSDF pass so the
+    // recipient receives the FDX field vocabulary (FDX v6 accounts).
+    let body = fdx_account_document(&body);
     let filter = consent_filter_from_headers(&state, &headers).await;
     // Wrap in FDX response format, then apply CSDF minimization (§7).
     let wrapped = serde_json::json!({ "accounts": body });
@@ -422,6 +428,9 @@ pub async fn get_account_detail(
         .json()
         .await
         .map_err(|e| FdxErrorResponse::internal(format!("ledger decode: {e}")))?;
+    // The FDX wire normalization (get_accounts precedent): the detail
+    // document carries the FDX field vocabulary the recipient reads.
+    let body = fdx_account_document(&body);
     let filter = consent_filter_from_headers(&state, &headers).await;
     Ok(Json(AccountsPassthrough(minimize_response(
         &body,
@@ -2702,6 +2711,60 @@ pub async fn health() -> Json<ServiceHealth> {
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
+
+/// Normalize a Ledger account document (or list envelope) to the FDX v6
+/// account wire shape: `accountType` + `accountNumberDisplay` (the masked
+/// display form - the FDX statutory field). The Ledger holds no PAN (no
+/// account-number column), so the display number derives from the account
+/// id's tail (a stable, honestly-masked display handle - never a stub
+/// PAN, and never the full id). Applied BEFORE the CSDF pass so the
+/// recipient plane reads the FDX field vocabulary (the consent_rfw
+/// normalizer's precedent - both spellings accepted on input, FDX on out).
+fn fdx_account_document(body: &serde_json::Value) -> serde_json::Value {
+    match body {
+        serde_json::Value::Array(arr) => serde_json::Value::Array(
+            arr.iter().map(fdx_account_document).collect(),
+        ),
+        serde_json::Value::Object(map) => {
+            // A list envelope ({accounts: [...]}) recurses into its rows.
+            if let Some(rows) = map.get("accounts").and_then(|v| v.as_array()) {
+                let mut out = map.clone();
+                out.insert(
+                    "accounts".into(),
+                    serde_json::Value::Array(rows.iter().map(fdx_account_document).collect()),
+                );
+                return serde_json::Value::Object(out);
+            }
+            let mut out = map.clone();
+            // account_type (ledger) → accountType (FDX); keep both spellings.
+            if !out.contains_key("accountType") {
+                if let Some(t) = map.get("account_type").and_then(|v| v.as_str()) {
+                    out.insert("accountType".into(), serde_json::json!(t));
+                }
+            }
+            out.remove("account_type");
+            // The masked display number: derive from the account id when
+            // the ledger carries none (it holds no PAN at all).
+            if !out.contains_key("accountNumberDisplay") {
+                let id = map
+                    .get("id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default();
+                if !id.is_empty() {
+                    let tail = id.replace('-', "");
+                    let tail = tail.chars().rev().take(4).collect::<Vec<_>>();
+                    let tail: String = tail.into_iter().rev().collect();
+                    out.insert(
+                        "accountNumberDisplay".into(),
+                        serde_json::json!(format!("**** **** {tail}")),
+                    );
+                }
+            }
+            serde_json::Value::Object(out)
+        }
+        other => other.clone(),
+    }
+}
 
 fn row_to_consent(row: &sqlx::postgres::PgRow) -> ConsentResponse {
     let status: String = row.get("status");
