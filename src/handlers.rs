@@ -2068,7 +2068,14 @@ pub async fn list_recipient_accounts(
             .to_string()
     };
 
-    let resp = http
+    // The provider's grant row seeds ASYNCHRONOUSLY from the AS's
+    // grant:created event (outbox → relay → bus → this service's
+    // per-tenant grant-seed consumer) - the customer JUST authorized on
+    // the hosted consent screen, so the first data call can land inside
+    // that settle window and answer 403 INSUFFICIENT_SCOPE. Retry the
+    // call while it is the consent gate denying (bounded: the seed ride
+    // is seconds; a genuinely-insufficient consent stays denied after).
+    let mut resp = http
         .get(format!(
             "{}/fdx/v6/accounts",
             provider_fdx_base.trim_end_matches('/')
@@ -2077,6 +2084,19 @@ pub async fn list_recipient_accounts(
         .send()
         .await
         .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+    let grant_settle_deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+    while resp.status() == StatusCode::FORBIDDEN && std::time::Instant::now() < grant_settle_deadline {
+        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        resp = http
+            .get(format!(
+                "{}/fdx/v6/accounts",
+                provider_fdx_base.trim_end_matches('/')
+            ))
+            .header("authorization", &bearer)
+            .send()
+            .await
+            .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
+    }
     let body: serde_json::Value = resp
         .json()
         .await
