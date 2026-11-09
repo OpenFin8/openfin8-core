@@ -2179,20 +2179,107 @@ pub async fn get_recipient_account_transactions(
     headers: HeaderMap,
     Path(account_id): Path<Uuid>,
 ) -> Result<Json<AccountsPassthrough>, (StatusCode, String)> {
-    let _a = auth::verify_token(&state.config, &headers).await?;
+    let a = auth::verify_token(&state.config, &headers).await?;
     crate::policy::require(
         &state.policy,
-        &_a,
+        &a,
         &headers,
         sentin8::shield::EvalTarget::new(state.config.profile.target("recipient:read")),
     )
     .await?;
-    let http = ledger_http(&state).map_err(|e| (StatusCode::BAD_GATEWAY, e.message))?;
+    // Same delegated-token lane as list_recipient_accounts (the two-ledger
+    // contract, DESIGN.md §1): resolve the recipient's most-recent ACTIVE
+    // connection + the delegated provider token from THIS tenant's registry,
+    // then read the PROVIDER's public FDX transactions surface - never the
+    // plane ledger directly (the account belongs to the provider's tenant;
+    // the ops-plane host carries no tenant context and answers 404).
+    let mut conn = state.pool.begin().await.map_err(err_db)?;
+    set_tenant_context(&mut conn, a.env_id()).await;
+    let consent_row = sqlx::query(
+        r#"SELECT id, provider_id, client_id FROM recipient_consents
+            WHERE customer_id::text = $1 AND status = 'active'
+            ORDER BY created_at DESC LIMIT 1"#,
+    )
+    .bind(a.sub())
+    .fetch_optional(&mut *conn)
+    .await
+    .map_err(err_db)?;
+    let consent_row = match consent_row {
+        Some(r) => r,
+        None => {
+            return Ok(Json(AccountsPassthrough(
+                serde_json::json!({ "transactions": [] }),
+            )))
+        }
+    };
+    let cid: Uuid = consent_row.try_get("id").unwrap_or_default();
+    let provider_id: String = consent_row.try_get("provider_id").unwrap_or_default();
+    let provider_token: String = tokens::load_provider_access_token(&mut conn, cid)
+        .await
+        .unwrap_or_default()
+        .unwrap_or_default();
+    let _ = conn.commit().await;
+
+    // Resolve the provider's public FDX data-plane host from the catalog
+    // (provider_profiles - no RLS), then call its transactions surface with
+    // the delegated token (the provider enforces its own consent gate +
+    // CSDF minimization per request - the recipient receives exactly what
+    // the bank may release).
+    let profile_row = sqlx::query(
+        r#"SELECT env_id FROM provider_profiles
+            WHERE status = 'active'
+              AND (env_id::text = $1 OR id::text = $1)
+            LIMIT 1"#,
+    )
+    .bind(&provider_id)
+    .fetch_optional(&state.pool)
+    .await
+    .ok()
+    .flatten();
+    let provider_env_id: Uuid = profile_row
+        .as_ref()
+        .and_then(|r| r.try_get::<Uuid, _>("env_id").ok())
+        .unwrap_or_else(Uuid::nil);
+    if provider_env_id.is_nil() {
+        return Err((
+            StatusCode::NOT_FOUND,
+            "provider not found in the catalog".into(),
+        ));
+    }
+    let provider_fdx_base = provider_env_fdx_base_url(
+        &state.pool,
+        provider_env_id,
+        state.config.profile.service_type,
+    )
+    .await;
+    if provider_fdx_base.is_empty() {
+        return Err((
+            StatusCode::BAD_GATEWAY,
+            "provider FDX host could not be derived".into(),
+        ));
+    }
+    let bearer = if !provider_token.is_empty() {
+        format!("Bearer {}", provider_token)
+    } else {
+        headers
+            .get(axum::http::header::AUTHORIZATION)
+            .and_then(|v| v.to_str().ok())
+            .unwrap_or("")
+            .to_string()
+    };
+    let http = reqwest::Client::builder().build().map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("http client: {e}"),
+        )
+    })?;
     let resp = http
         .get(format!(
-            "{}/v1/accounts/{}/transactions",
-            state.config.ledger_url, account_id
+            "{}/fdx/v6/accounts/{}/transactions",
+            provider_fdx_base.trim_end_matches('/'),
+            account_id
         ))
+        .header("authorization", &bearer)
         .send()
         .await
         .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
