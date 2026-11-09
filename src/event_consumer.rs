@@ -71,7 +71,7 @@ async fn run_envinit(
         match bus_client.sse_consume("sys", CONSUMER_GROUP).await {
             Ok(resp) => {
                 tracing::info!("fdx: bus SSE connected to stream family 'sys'");
-                sse_loop("sys", CONSUMER_GROUP, &pool, &bus_client, resp, &profile).await;
+                sse_loop("sys", CONSUMER_GROUP, &pool, &bus_client, resp, &profile, None).await;
                 tracing::info!("fdx: bus SSE disconnected - reconnecting");
             }
             Err(e) => {
@@ -118,7 +118,7 @@ async fn run_grantseed(
                     match bus.sse_consume_env("auth", AUTH_CONSUMER_GROUP, Some(env)).await {
                         Ok(resp) => {
                             tracing::info!(%env, "fdx: bus SSE connected to stream family 'auth'");
-                            sse_loop("auth", AUTH_CONSUMER_GROUP, &pool, &bus, resp, &profile).await;
+                            sse_loop("auth", AUTH_CONSUMER_GROUP, &pool, &bus, resp, &profile, Some(env)).await;
                             tracing::info!(%env, "fdx: bus SSE disconnected (auth) - reconnecting");
                         }
                         Err(e) => {
@@ -144,6 +144,7 @@ async fn sse_loop(
     bus_client: &sentin8::bus::client::BusClient,
     resp: reqwest::Response,
     profile: &crate::profile::Profile,
+    env_id: Option<uuid::Uuid>,
 ) {
     let mut stream = resp.bytes_stream();
     let mut buffer = String::new();
@@ -188,7 +189,10 @@ async fn sse_loop(
                 _ => {}
             }
 
-            if let Err(e) = bus_client.ack(family, group, &msg.message_id).await {
+            if let Err(e) = bus_client
+                .ack_env(family, group, &msg.message_id, env_id)
+                .await
+            {
                 tracing::warn!(error = %e, message_id = %msg.message_id, "fdx: ack failed");
             }
         }
