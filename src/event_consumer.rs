@@ -277,11 +277,13 @@ async fn ensure_provider_profile(
         .execute(&mut *tx)
         .await;
     // The version column is per-jurisdiction (each DDL names it after its
-    // own wire family - `openfin8_ca_version` / `open_ca_version`).
+    // own wire family - `openfin8_ca_version` / `open_ca_version`). The
+    // capabilities ride a bound parameter - a literal jsonb string inside
+    // the format! template needs double-brace escaping and is error-prone.
     if let Err(e) = sqlx::query(&format!(
         r#"INSERT INTO provider_profiles
            (env_id, provider_name, issuer_url, jwks_url, {version_col}, capabilities, status)
-           VALUES ($1, $2, $3, $4, $5, '[\"accounts\",\"transactions\",\"payments\"]'::jsonb, 'active')
+           VALUES ($1, $2, $3, $4, $5, $6::jsonb, 'active')
            ON CONFLICT (env_id, provider_name)
            DO UPDATE SET status = 'active', issuer_url = EXCLUDED.issuer_url, jwks_url = EXCLUDED.jwks_url"#,
     ))
@@ -290,6 +292,7 @@ async fn ensure_provider_profile(
     .bind(&issuer_url)
     .bind(&jwks_url)
     .bind(&format!("v{}", fdx_version))
+    .bind(r#"["accounts","transactions","payments"]"#)
     .execute(&mut *tx)
     .await
     {
