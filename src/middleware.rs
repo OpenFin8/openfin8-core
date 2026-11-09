@@ -128,7 +128,7 @@ pub async fn consent_filter(state: &AppState, _a: &auth::AuthContext) -> CsdfFil
     sentin8::shell::set_tenant_context(&mut conn, _a.env_id()).await;
     let scopes: Vec<String> = sqlx::query(
         r#"SELECT scopes FROM consents
-            WHERE env_id = $1 AND customer_id = $2 AND status = 'active'
+            WHERE env_id = $1 AND customer_id::text = $2 AND status = 'active'
             ORDER BY created_at DESC LIMIT 1"#,
     )
     .bind(_a.env_id())
