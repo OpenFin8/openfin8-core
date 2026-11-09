@@ -616,12 +616,15 @@ pub async fn list_recipient_providers(
     .await?;
     // NOTE: no set_tenant_context - provider_profiles has no RLS, so this
     // returns all active providers across orgs (a global recipient catalog).
-    let rows = sqlx::query(
-        r#"SELECT id, provider_name, issuer_url, fdx_version, capabilities, status
+    // The version column is per-jurisdiction (`profile.version_column`):
+    // each DDL names it after its own wire family.
+    let version_col = state.config.profile.version_column;
+    let rows = sqlx::query(&format!(
+        r#"SELECT id, provider_name, issuer_url, {version_col}, capabilities, status
              FROM provider_profiles
             WHERE status = 'active'
-            ORDER BY created_at DESC"#,
-    )
+            ORDER BY created_at DESC"#
+    ))
     .fetch_all(&state.pool)
     .await
     .map_err(err_db)?;
@@ -643,7 +646,7 @@ pub async fn list_recipient_providers(
                 id: r.get::<Uuid, _>("id"),
                 name: r.get::<String, _>("provider_name"),
                 issuer_url: r.get::<String, _>("issuer_url"),
-                fdx_version: r.get::<String, _>("fdx_version"),
+                fdx_version: r.get::<String, _>(version_col),
                 supported_data_clusters: clusters,
                 status: r.get::<String, _>("status"),
             }
@@ -2212,10 +2215,11 @@ pub async fn get_provider_profile(
     // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see list_consents.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
-    let row = sqlx::query(
-        r#"SELECT id, provider_name, issuer_url, jwks_url, fdx_version, capabilities, status
-             FROM provider_profiles ORDER BY created_at DESC LIMIT 1"#,
-    )
+    let version_col = state.config.profile.version_column;
+    let row = sqlx::query(&format!(
+        r#"SELECT id, provider_name, issuer_url, jwks_url, {version_col}, capabilities, status
+             FROM provider_profiles ORDER BY created_at DESC LIMIT 1"#
+    ))
     .fetch_optional(&mut *conn)
     .await
     .map_err(err_db)?;
@@ -2225,7 +2229,7 @@ pub async fn get_provider_profile(
                 id: r.get::<Uuid, _>("id"),
                 provider_name: r.get::<String, _>("provider_name"),
                 issuer_url: r.get::<String, _>("issuer_url"),
-                fdx_version: r.get::<String, _>("fdx_version"),
+                fdx_version: r.get::<String, _>(version_col),
                 status: r.get::<String, _>("status"),
             }),
         })),
@@ -2270,13 +2274,14 @@ pub async fn update_provider_profile(
     // Same-transaction discipline (openfin8-ca DESIGN.md §5) - see start_consent.
     let mut conn = state.pool.begin().await.map_err(err_db)?;
     set_tenant_context(&mut conn, a.env_id()).await;
-    let row = sqlx::query(
-        r#"INSERT INTO provider_profiles (env_id, provider_name, issuer_url, jwks_url, fdx_version, capabilities, status)
+    let version_col = state.config.profile.version_column;
+    let row = sqlx::query(&format!(
+        r#"INSERT INTO provider_profiles (env_id, provider_name, issuer_url, jwks_url, {version_col}, capabilities, status)
            VALUES ($1, $2, $3, '', $4, '[]', 'active')
            ON CONFLICT (env_id, provider_name) DO UPDATE
-             SET issuer_url = EXCLUDED.issuer_url, fdx_version = EXCLUDED.fdx_version, updated_at = now()
-           RETURNING id"#,
-    )
+             SET issuer_url = EXCLUDED.issuer_url, {version_col} = EXCLUDED.{version_col}, updated_at = now()
+           RETURNING id"#
+    ))
     .bind(a.env_id()).bind(&req.provider_name)
     .bind(&req.issuer_url).bind(&req.fdx_version)
     .fetch_one(&mut *conn).await.map_err(err_db)?;
@@ -2516,13 +2521,14 @@ pub async fn get_recipient_provider(
         sentin8::shield::EvalTarget::new(state.config.profile.target("recipient:read")),
     )
     .await?;
-    let row = sqlx::query(
-        r#"SELECT id, provider_name, issuer_url, fdx_version, capabilities, status
+    let version_col = state.config.profile.version_column;
+    let row = sqlx::query(&format!(
+        r#"SELECT id, provider_name, issuer_url, {version_col}, capabilities, status
              FROM provider_profiles
             WHERE status = 'active'
               AND (env_id::text = $1 OR id::text = $1)
-            LIMIT 1"#,
-    )
+            LIMIT 1"#
+    ))
     .bind(&id)
     .fetch_optional(&state.pool)
     .await
@@ -2543,7 +2549,7 @@ pub async fn get_recipient_provider(
                 id: r.get::<Uuid, _>("id"),
                 name: r.get::<String, _>("provider_name"),
                 issuer_url: r.get::<String, _>("issuer_url"),
-                fdx_version: r.get::<String, _>("fdx_version"),
+                fdx_version: r.get::<String, _>(version_col),
                 supported_data_clusters: clusters,
                 status: r.get::<String, _>("status"),
             }))

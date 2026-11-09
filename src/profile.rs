@@ -40,6 +40,12 @@ pub struct Profile {
     pub stream_family: &'static str,
     /// The DB schema this jurisdiction owns: "openfin8_us", "openfin8_ca".
     pub schema: &'static str,
+    /// The version column on the jurisdiction's `provider_profiles`
+    /// table: each jurisdiction's DDL names it after its own wire
+    /// family (`openfin8_ca_version` / `open_ca_version`), so the
+    /// shared handlers interpolate this name rather than hardcoding
+    /// the pre-rename `fdx_version` spelling.
+    pub version_column: &'static str,
     /// The Shield scope vocabulary prefix: "openfin8:us",
     /// "openfin8:ca" - `format!("{prefix}:accountbasic:read")` etc.
     pub scope_prefix: &'static str,
@@ -112,6 +118,7 @@ impl Profile {
             family: "openfin8-ca",
             stream_family: "openfin8-ca",
             schema: "openfin8_ca",
+            version_column: "openfin8_ca_version",
             scope_prefix: "openfin8:ca",
             fdx_version: env::var("OPENFIN8_CA_VERSION").unwrap_or_else(|_| "6.5".into()),
         }
@@ -127,6 +134,7 @@ impl Profile {
             family: "openfin8-us",
             stream_family: "openfin8-us",
             schema: "openfin8_us",
+            version_column: "open_ca_version",
             scope_prefix: "openfin8:us",
             fdx_version: env::var("OPENFIN8_US_VERSION").unwrap_or_else(|_| "6.5".into()),
         }
@@ -149,6 +157,7 @@ impl Profile {
             family: "openfin8-eu",
             stream_family: "openfin8-eu",
             schema: "openfin8_eu",
+            version_column: "of_version",
             scope_prefix: "openfin8:eu",
             fdx_version: env::var("OPENFIN8_EU_VERSION").unwrap_or_else(|_| "2.4".into()),
         }
@@ -171,6 +180,7 @@ impl Profile {
             family: "openfin8-uk",
             stream_family: "openfin8-uk",
             schema: "openfin8_uk",
+            version_column: "ob_version",
             scope_prefix: "openfin8:uk",
             fdx_version: env::var("OPENFIN8_UK_VERSION").unwrap_or_else(|_| "3.1.11".into()),
         }

@@ -198,7 +198,7 @@ async fn backfill_enabled_envs(pool: &PgPool, profile: &crate::profile::Profile)
     tracing::info!("fdx: backfill - {} known env(s) re-verified", rows.len());
 
     for (env_id,) in rows {
-        ensure_provider_profile(pool, env_id, &profile.fdx_version).await;
+        ensure_provider_profile(pool, env_id, &profile.fdx_version, profile.version_column).await;
     }
 }
 
@@ -211,7 +211,12 @@ async fn backfill_enabled_envs(pool: &PgPool, profile: &crate::profile::Profile)
 /// sanctioned on-demand read. The former cross-database join against the
 /// platform `sys_environments`/`sys_organizations` never worked (those
 /// tables do not exist in the bank8 database) and is removed.
-async fn ensure_provider_profile(pool: &PgPool, env_id: uuid::Uuid, fdx_version: &str) {
+async fn ensure_provider_profile(
+    pool: &PgPool,
+    env_id: uuid::Uuid,
+    fdx_version: &str,
+    version_col: &'static str,
+) {
     // Fetch the tenant snapshot from the platform (Sys tenant-snapshot
     // API). A transient outage returns early - the next env-init or
     // backfill pass retries (both are idempotent).
@@ -271,13 +276,15 @@ async fn ensure_provider_profile(pool: &PgPool, env_id: uuid::Uuid, fdx_version:
         .bind(env_id)
         .execute(&mut *tx)
         .await;
-    if let Err(e) = sqlx::query(
+    // The version column is per-jurisdiction (each DDL names it after its
+    // own wire family - `openfin8_ca_version` / `open_ca_version`).
+    if let Err(e) = sqlx::query(&format!(
         r#"INSERT INTO provider_profiles
-           (env_id, provider_name, issuer_url, jwks_url, fdx_version, capabilities, status)
+           (env_id, provider_name, issuer_url, jwks_url, {version_col}, capabilities, status)
            VALUES ($1, $2, $3, $4, $5, '[\"accounts\",\"transactions\",\"payments\"]'::jsonb, 'active')
            ON CONFLICT (env_id, provider_name)
            DO UPDATE SET status = 'active', issuer_url = EXCLUDED.issuer_url, jwks_url = EXCLUDED.jwks_url"#,
-    )
+    ))
     .bind(env_id)
     .bind(&org_name)
     .bind(&issuer_url)
@@ -545,7 +552,7 @@ async fn handle_envinit_message(
     if let Err(e) = seed_env_policy_sets(pool, env_id, profile).await {
         tracing::warn!(error = %e, %env_id, "fdx: per-env policy-set seed failed");
     }
-    ensure_provider_profile(pool, env_id, &profile.fdx_version).await;
+    ensure_provider_profile(pool, env_id, &profile.fdx_version, profile.version_column).await;
 }
 
 /// Copy fdx's `origin='platform'` policy sets from the SYSTEM-env
