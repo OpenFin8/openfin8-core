@@ -2073,8 +2073,10 @@ pub async fn list_recipient_accounts(
     // per-tenant grant-seed consumer) - the customer JUST authorized on
     // the hosted consent screen, so the first data call can land inside
     // that settle window and answer 403 INSUFFICIENT_SCOPE. Retry the
-    // call while it is the consent gate denying (bounded: the seed ride
-    // is seconds; a genuinely-insufficient consent stays denied after).
+    // call while it is the consent gate denying (bounded at 20s: the
+    // chain is outbox → relay tick → bus XADD → SSE consumer - observed
+    // ~6-7s after the callback; a genuinely-insufficient consent stays
+    // denied after the window and the caller sees the 403).
     let mut resp = http
         .get(format!(
             "{}/fdx/v6/accounts",
@@ -2084,7 +2086,7 @@ pub async fn list_recipient_accounts(
         .send()
         .await
         .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
-    let grant_settle_deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+    let grant_settle_deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
     while resp.status() == StatusCode::FORBIDDEN && std::time::Instant::now() < grant_settle_deadline {
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
         resp = http
