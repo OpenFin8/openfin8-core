@@ -1817,7 +1817,7 @@ pub async fn revoke_recipient_consent(
     set_tenant_context(&mut conn, a.env_id()).await;
     let row = sqlx::query(
         r#"SELECT provider_id, client_id FROM recipient_consents
-            WHERE id = $1 AND customer_id = $2"#,
+            WHERE id = $1 AND customer_id::text = $2"#,
     )
     .bind(id)
     .bind(a.sub())
@@ -1835,7 +1835,7 @@ pub async fn revoke_recipient_consent(
     // Mark the registry row revoked (the fintech's own record).
     let updated = sqlx::query(
         r#"UPDATE recipient_consents SET status = 'revoked', updated_at = now()
-            WHERE id = $1 AND customer_id = $2
+            WHERE id = $1 AND customer_id::text = $2
             RETURNING id, customer_id, provider_id, status, scopes"#,
     )
     .bind(id)
@@ -1979,7 +1979,7 @@ pub async fn list_recipient_accounts(
     } else {
         sqlx::query(
             r#"SELECT id, provider_id, client_id FROM recipient_consents
-                WHERE customer_id = $1 AND status = 'active'
+                WHERE customer_id::text = $1 AND status = 'active'
                 ORDER BY created_at DESC LIMIT 1"#,
         )
         .bind(a.sub())
