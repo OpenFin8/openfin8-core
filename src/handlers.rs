@@ -2893,6 +2893,12 @@ async fn ensure_recipient_client(
     } else {
         let key_ref = crate::tokens::store_dpop_key(Uuid::new_v4(), &pem)
             .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e))?;
+        // Bind order matches the column list exactly: recipient_name ($3,
+        // from the profile's scope vocabulary - the jurisdiction-agnostic
+        // recipient identity) precedes client_id - a former off-by-one
+        // dropped the name and landed client_id (text) in the redirect_uris
+        // (text[]) slot, failing every DCR registration insert.
+        let recipient_name = state.config.profile.scope("recipient");
         let _ = sqlx::query(
             r#"INSERT INTO recipients
                    (env_id, provider_id, recipient_name, client_id, redirect_uris, dpop_key_ref, status)
@@ -2905,6 +2911,7 @@ async fn ensure_recipient_client(
         )
         .bind(env_id)
         .bind(provider_id)
+        .bind(&recipient_name)
         .bind(&client_id)
         .bind(vec![callback_url.clone()])
         .bind(&key_ref)
