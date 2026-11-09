@@ -344,15 +344,15 @@ pub fn routes(
             "/v1/consents",
             post(handlers::create_consent).get(handlers::list_consents),
         )
-        .route("/v1/consents/{{id}}", get(handlers::get_consent))
-        .route("/v1/consents/{{id}}/revoke", post(handlers::revoke_consent))
+        .route("/v1/consents/{id}", get(handlers::get_consent))
+        .route("/v1/consents/{id}/revoke", post(handlers::revoke_consent))
         // Recipient API
         .route(
             "/v1/recipient/providers",
             get(handlers::list_recipient_providers),
         )
         .route(
-            "/v1/recipient/providers/{{id}}",
+            "/v1/recipient/providers/{id}",
             get(handlers::get_recipient_provider),
         )
         .route(
@@ -365,15 +365,15 @@ pub fn routes(
             get(handlers::list_recipient_consents),
         )
         .route(
-            "/v1/recipient/consents/{{id}}",
+            "/v1/recipient/consents/{id}",
             get(handlers::get_recipient_consent),
         )
         .route(
-            "/v1/recipient/consents/{{id}}/refresh",
+            "/v1/recipient/consents/{id}/refresh",
             post(handlers::refresh_consent),
         )
         .route(
-            "/v1/recipient/consents/{{id}}/revoke",
+            "/v1/recipient/consents/{id}/revoke",
             post(handlers::revoke_recipient_consent),
         )
         .route(
@@ -381,7 +381,7 @@ pub fn routes(
             get(handlers::list_recipient_accounts),
         )
         .route(
-            "/v1/recipient/accounts/{{id}}/transactions",
+            "/v1/recipient/accounts/{id}/transactions",
             get(handlers::get_recipient_account_transactions),
         )
         .route(
@@ -395,11 +395,11 @@ pub fn routes(
         )
         .route("/v1/admin/recipients", get(handlers::list_recipients))
         .route(
-            "/v1/admin/recipients/{{id}}/activate",
+            "/v1/admin/recipients/{id}/activate",
             post(handlers::activate_recipient),
         )
         .route(
-            "/v1/admin/recipients/{{id}}/suspend",
+            "/v1/admin/recipients/{id}/suspend",
             post(handlers::suspend_recipient),
         )
         .route("/v1/admin/consents", get(handlers::list_all_consents))
@@ -432,13 +432,13 @@ pub fn routes(
             get(sentin8::shield::admin::list_policy_sets::<handlers::AppState>),
         )
         .route(
-            "/v1/admin/policy-sets/{{name}}",
+            "/v1/admin/policy-sets/{name}",
             get(sentin8::shield::admin::get_policy_set::<handlers::AppState>)
                 .put(sentin8::shield::admin::put_policy_set::<handlers::AppState>)
                 .delete(sentin8::shield::admin::delete_policy_set::<handlers::AppState>),
         )
         .route(
-            "/v1/admin/policy-sets/{{name}}/test",
+            "/v1/admin/policy-sets/{name}/test",
             post(sentin8::shield::admin::test_policy_set::<handlers::AppState>),
         )
         .route(
