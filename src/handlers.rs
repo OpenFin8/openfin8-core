@@ -1370,10 +1370,24 @@ pub async fn consent_callback(
         Err(e) => return (StatusCode::INTERNAL_SERVER_ERROR, format!("db: {e}")).into_response(),
     };
     let provider_id: String = reg_row.try_get("provider_id").unwrap_or_default();
-    let client_id: String = reg_row
-        .try_get::<Option<String>, _>("client_id")
-        .ok()
-        .flatten()
+    // The OAuth client belongs to the RECIPIENT's per-provider registry row
+    // (`recipients`, DCR-registered at consents/start) - the consent row
+    // carries only the flow state. Reading client_id from the consent row
+    // always found empty, the token-exchange guard silently skipped, and
+    // no code exchange (no provider tokens, no grant event) ever ran.
+    let client_row = sqlx::query(
+        r#"SELECT client_id FROM recipients
+            WHERE env_id = $1 AND provider_id = $2 AND status = 'active'
+            LIMIT 1"#,
+    )
+    .bind(tls_env)
+    .bind(&provider_id)
+    .fetch_optional(&mut *conn)
+    .await
+    .ok()
+    .flatten();
+    let client_id: String = client_row
+        .and_then(|r| r.try_get::<Option<String>, _>("client_id").ok().flatten())
         .unwrap_or_default();
     let code_verifier: Option<String> = reg_row
         .try_get::<Option<String>, _>("code_verifier")
