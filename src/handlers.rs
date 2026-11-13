@@ -2110,7 +2110,9 @@ pub async fn list_recipient_accounts(
         .await
         .map_err(|e| (StatusCode::BAD_GATEWAY, e.to_string()))?;
     let grant_settle_deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
-    while resp.status() == StatusCode::FORBIDDEN && std::time::Instant::now() < grant_settle_deadline {
+    while resp.status() == StatusCode::FORBIDDEN
+        && std::time::Instant::now() < grant_settle_deadline
+    {
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;
         resp = http
             .get(format!(
@@ -2809,9 +2811,9 @@ pub async fn health() -> Json<ServiceHealth> {
 /// normalizer's precedent - both spellings accepted on input, FDX on out).
 fn fdx_account_document(body: &serde_json::Value) -> serde_json::Value {
     match body {
-        serde_json::Value::Array(arr) => serde_json::Value::Array(
-            arr.iter().map(fdx_account_document).collect(),
-        ),
+        serde_json::Value::Array(arr) => {
+            serde_json::Value::Array(arr.iter().map(fdx_account_document).collect())
+        }
         serde_json::Value::Object(map) => {
             // A list envelope ({accounts: [...]}) recurses into its rows.
             if let Some(rows) = map.get("accounts").and_then(|v| v.as_array()) {
@@ -2833,10 +2835,7 @@ fn fdx_account_document(body: &serde_json::Value) -> serde_json::Value {
             // The masked display number: derive from the account id when
             // the ledger carries none (it holds no PAN at all).
             if !out.contains_key("accountNumberDisplay") {
-                let id = map
-                    .get("id")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or_default();
+                let id = map.get("id").and_then(|v| v.as_str()).unwrap_or_default();
                 if !id.is_empty() {
                     let tail = id.replace('-', "");
                     let tail = tail.chars().rev().take(4).collect::<Vec<_>>();

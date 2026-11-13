@@ -71,7 +71,16 @@ async fn run_envinit(
         match bus_client.sse_consume("sys", CONSUMER_GROUP).await {
             Ok(resp) => {
                 tracing::info!("fdx: bus SSE connected to stream family 'sys'");
-                sse_loop("sys", CONSUMER_GROUP, &pool, &bus_client, resp, &profile, None).await;
+                sse_loop(
+                    "sys",
+                    CONSUMER_GROUP,
+                    &pool,
+                    &bus_client,
+                    resp,
+                    &profile,
+                    None,
+                )
+                .await;
                 tracing::info!("fdx: bus SSE disconnected - reconnecting");
             }
             Err(e) => {
@@ -101,12 +110,11 @@ async fn run_grantseed(
     // the known-env list changes (a new tenant enables the service).
     let mut served: std::collections::HashSet<uuid::Uuid> = Default::default();
     loop {
-        let envs: Vec<uuid::Uuid> = sqlx::query_scalar(
-            r#"SELECT DISTINCT env_id FROM provider_profiles"#,
-        )
-        .fetch_all(&pool)
-        .await
-        .unwrap_or_default();
+        let envs: Vec<uuid::Uuid> =
+            sqlx::query_scalar(r#"SELECT DISTINCT env_id FROM provider_profiles"#)
+                .fetch_all(&pool)
+                .await
+                .unwrap_or_default();
         let envs: std::collections::HashSet<uuid::Uuid> = envs.into_iter().collect();
         let new_envs: Vec<uuid::Uuid> = envs.difference(&served).copied().collect();
         for env in new_envs {
@@ -115,10 +123,22 @@ async fn run_grantseed(
             let profile = profile_auth.clone();
             tokio::spawn(async move {
                 loop {
-                    match bus.sse_consume_env("auth", AUTH_CONSUMER_GROUP, Some(env)).await {
+                    match bus
+                        .sse_consume_env("auth", AUTH_CONSUMER_GROUP, Some(env))
+                        .await
+                    {
                         Ok(resp) => {
                             tracing::info!(%env, "fdx: bus SSE connected to stream family 'auth'");
-                            sse_loop("auth", AUTH_CONSUMER_GROUP, &pool, &bus, resp, &profile, Some(env)).await;
+                            sse_loop(
+                                "auth",
+                                AUTH_CONSUMER_GROUP,
+                                &pool,
+                                &bus,
+                                resp,
+                                &profile,
+                                Some(env),
+                            )
+                            .await;
                             tracing::info!(%env, "fdx: bus SSE disconnected (auth) - reconnecting");
                         }
                         Err(e) => {
